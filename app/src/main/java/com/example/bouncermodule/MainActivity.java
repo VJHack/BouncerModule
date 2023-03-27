@@ -36,7 +36,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private Button plusButton;
     private Button minusButton;
-
     private int counterValInt = 0;
 
     private ImageView photoIdImageView;
