@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.home.HomeFragment">
+
+    <TextView
+        android:id="@+id/text_home"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:textAlignment="center"
+        android:textColor="#FFFFFF"
+        android:textSize="20sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_marginTop="-100dp"
+        tools:layout_editor_absoluteX="-1dp"
+        tools:layout_editor_absoluteY="90dp">
+
+        <TextView
+            android:id="@+id/LineLength"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Line Length:"
+            android:textStyle="bold"
+            android:textSize="32dp"
+            android:gravity="center"/>
+
+        <Button
+            android:id="@+id/None"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="None" />
+
+        <Button
+            android:id="@+id/Short"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Short" />
+
+        <Button
+            android:id="@+id/Medium"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Medium" />
+
+        <Button
+            android:id="@+id/Long"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Long"
+            android:gravity="center"/>
+        <TextView
+            android:id="@+id/CurrentLength"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Current Line Length:"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textSize="25dp"
+            />
+        <TextView
+            android:id="@+id/CurrentLengthValue"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="NONE"
+            android:gravity="center"
+            android:textStyle="bold"
+            android:textSize="32dp"
+            android:textColor="#028A0F"
+            android:layout_marginBottom="40dp"
+            />
+
+        <TextView
+            android:id="@+id/Counter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Counter:"
+            android:textStyle="bold"
+            android:textSize="32dp"
+            android:gravity="center"
+            />
+
+        <Button
+            android:id="@+id/plus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="+" />
+
+
+        <TextView
+            android:id="@+id/Total_Value"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="25dp"
+            android:text="0"
+            android:gravity="center"/>
+
+        <Button
+            android:id="@+id/minus"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="-"
+            android:gravity="center"/>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
