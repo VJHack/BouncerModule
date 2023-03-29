@@ -1,4 +1,4 @@
-package com.example.bouncermodule.ui.dashboard;
+package com.example.bouncermodule.ui.bars;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -12,20 +12,20 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.bouncermodule.databinding.FragmentMapBinding;
 
-public class DashboardFragment extends Fragment {
+public class BarsFragment extends Fragment {
 
     private FragmentMapBinding binding;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        DashboardViewModel dashboardViewModel =
-                new ViewModelProvider(this).get(DashboardViewModel.class);
+        BarsViewModel barsViewModel =
+                new ViewModelProvider(this).get(BarsViewModel.class);
 
         binding = FragmentMapBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-//        final TextView textView = binding.textDashboard;
-//        dashboardViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+//        final TextView textView = binding.textBars;
+//        barsViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
         return root;
     }
 

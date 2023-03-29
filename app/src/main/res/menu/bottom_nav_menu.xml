@@ -2,14 +2,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
+        android:id="@+id/navigation_bars"
+        android:icon="@drawable/ic_dashboard_black_24dp"
+        android:title="Bars" />
+
+    <item
+        android:id="@+id/navigation_map"
+        android:icon="@drawable/ic_dashboard_black_24dp"
+        android:title="@string/map" />
+
+    <item
         android:id="@+id/navigation_home"
         android:icon="@drawable/ic_home_black_24dp"
         android:title="@string/title_home" />
-
-    <item
-        android:id="@+id/navigation_facerecognition"
-        android:icon="@drawable/ic_dashboard_black_24dp"
-        android:title="@string/title_facerecognition" />
-
 
 </menu>
