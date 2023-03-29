@@ -92,7 +92,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             currentLength.setTextColor(Color.parseColor("#FFA500"));
         }else if(view.getId() == R.id.Long){
             currentLength.setText("LONG");
-            currentLength.setTextColor(Color.parseColor("#FF0000"));
+            currentLength.setTextColor(Color.parseColor("#FF0000")); // Color Red
         }else if(view.getId() == R.id.None){
             currentLength.setText("NONE");
             currentLength.setTextColor(Color.parseColor("#028A0F"));
