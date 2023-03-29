@@ -1,7 +1,6 @@
 package com.example.bouncermodule;
 
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -15,8 +14,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -63,19 +60,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         minusButton = (Button) findViewById(R.id.minus);
         minusButton.setOnClickListener(this);
 
-        photoIdImageView = findViewById(R.id.imageviewphotoid);
-        photoIdButton = findViewById(R.id.capturePhotoId);
 
         //Request for camera runtime permission
-//        if (ContextCompat.checkSelfPermission( MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
-//            ActivityCompat.requestPermissions(MainActivity.this, new String[]{
-//                    Manifest.permission.CAMERA
-//            },100);
+
 //        }
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.navigation_home, R.id.navigation_facerecognition)
+                R.id.navigation_home, R.id.navigation_map, R.id.navigation_bars)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
@@ -104,9 +96,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 counterValInt--;
             }
             counterValue.setText("Total:    " + String.valueOf(counterValInt));
-        }else if(view.getId() == R.id.imageviewphotoid){
-            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-            startActivityForResult(intent, 100);
         }
     }
     @Override
