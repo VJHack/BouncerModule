@@ -23,6 +23,8 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.example.bouncermodule.databinding.ActivityMainBinding;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -80,6 +82,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
+
+        // Write a message to the database
+        FirebaseDatabase database = FirebaseDatabase.getInstance();
+        DatabaseReference myRef = database.getReference("message");
+
+        myRef.setValue("Hello, World!");
     }
 
     @Override
