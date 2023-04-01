@@ -10,10 +10,21 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.example.bouncermodule.ui.bars.BarsFragment;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -23,7 +34,10 @@ import com.example.bouncermodule.databinding.ActivityMainBinding;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
+    private GoogleMap mMap;
+
     private ActivityMainBinding binding;
+
     private TextView counterValue;
     private TextView currentLength;
     private Button noneButton;
@@ -33,6 +47,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private Button plusButton;
     private Button minusButton;
+
+    private Fragment mapFragment;
     private int counterValInt = 0;
 
     private ImageView photoIdImageView;
@@ -60,6 +76,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         minusButton = (Button) findViewById(R.id.minus);
         minusButton.setOnClickListener(this);
 
+
+
+//        BarsFragment.getMapAsync(this);
 
         //Request for camera runtime permission
 
@@ -98,6 +117,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             counterValue.setText("Total:    " + String.valueOf(counterValInt));
         }
     }
+
+
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
