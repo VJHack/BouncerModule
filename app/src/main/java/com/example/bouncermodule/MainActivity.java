@@ -6,13 +6,17 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
@@ -23,8 +27,21 @@ import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.example.bouncermodule.databinding.ActivityMainBinding;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -38,10 +55,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private Button plusButton;
     private Button minusButton;
+    // Grab value from database based on desired bar
     private int counterValInt = 0;
 
     private ImageView photoIdImageView;
     private Button photoIdButton;
+
+    // Firebase variables
+    private DatabaseReference mDatabase;
+    private Map<String, Bars> barsMap = new HashMap<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -83,11 +106,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
 
-        // Write a message to the database
-        FirebaseDatabase database = FirebaseDatabase.getInstance();
-        DatabaseReference myRef = database.getReference("message");
+        mDatabase = FirebaseDatabase.getInstance().getReference();
 
-        myRef.setValue("Hello, World!");
+        DatabaseReference barRef = mDatabase.child("bars/");
+        barRef.addValueEventListener(new ValueEventListener(){
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot){
+                for(DataSnapshot data: dataSnapshot.getChildren()){
+                    String barName = data.getKey();
+                    String lineLength = data.child("lineLength").getValue().toString();
+                    Integer lineCount = Integer.parseInt(data.child("lineCount").getValue().toString());
+                    Double latitude = Double.parseDouble(data.child("latitude").getValue().toString());
+                    Double longitude = Double.parseDouble(data.child("longitude").getValue().toString());;
+                    Bars tempBar = new Bars(lineLength, lineCount, longitude, latitude);
+                    barsMap.put(barName, tempBar);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+    }
+
+    // used for reading in file filled with new bars
+    public void writeNewBar(String barId, String lineLength, Integer lineCount, Double longitude, Double latitude) {
+        if (barsMap.containsKey(barId) == false){
+            Bars bar = new Bars(lineLength, lineCount, longitude, latitude);
+            Log.d("Writing new Bar", barId);
+            barsMap.put(barId, bar);
+            mDatabase.child("bars").child(barId).setValue(bar);
+        }
     }
 
     @Override
@@ -116,6 +167,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
             startActivityForResult(intent, 100);
         }
+
+        // Changing the line count and line length of Mondays
+        Bars tempBar = barsMap.get("Mondays");
+        tempBar.setLineCount(counterValInt);
+        tempBar.setLineLength((String) currentLength.getText());
+        mDatabase.child("bars").child("Mondays").setValue(tempBar);
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
