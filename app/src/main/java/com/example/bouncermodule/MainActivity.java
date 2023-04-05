@@ -44,21 +44,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         BottomNavigationView navView = findViewById(R.id.nav_view);
-        noneButton = (Button) findViewById(R.id.None);
-        noneButton.setOnClickListener(this);
-        shortButton = (Button) findViewById(R.id.Short);
-        shortButton.setOnClickListener(this);
-        mediumButton = (Button) findViewById(R.id.Medium);
-        mediumButton.setOnClickListener(this);
-        longButton = (Button) findViewById(R.id.Long);
-        longButton.setOnClickListener(this);
-
-        currentLength = (TextView) findViewById(R.id.CurrentLengthValue);
-        counterValue = (TextView) findViewById(R.id.Total_Value);
-        plusButton = (Button) findViewById(R.id.plus);
-        plusButton.setOnClickListener(this);
-        minusButton = (Button) findViewById(R.id.minus);
-        minusButton.setOnClickListener(this);
+//        noneButton = (Button) findViewById(R.id.None);
+//        noneButton.setOnClickListener(this);
+//        shortButton = (Button) findViewById(R.id.Short);
+//        shortButton.setOnClickListener(this);
+//        mediumButton = (Button) findViewById(R.id.Medium);
+//        mediumButton.setOnClickListener(this);
+//        longButton = (Button) findViewById(R.id.Long);
+//        longButton.setOnClickListener(this);
+//
+//        currentLength = (TextView) findViewById(R.id.CurrentLengthValue);
+//        counterValue = (TextView) findViewById(R.id.Total_Value);
+//        plusButton = (Button) findViewById(R.id.plus);
+//        plusButton.setOnClickListener(this);
+//        minusButton = (Button) findViewById(R.id.minus);
+//        minusButton.setOnClickListener(this);
 
 
         //Request for camera runtime permission
@@ -76,27 +76,27 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     public void onClick(View view) {
-        if(view.getId() == R.id.Short) {
-            currentLength.setText("SHORT");
-            currentLength.setTextColor(Color.parseColor("#0000FF"));
-        }else if(view.getId() == R.id.Medium){
-            currentLength.setText("MEDIUM");
-            currentLength.setTextColor(Color.parseColor("#FFA500"));
-        }else if(view.getId() == R.id.Long){
-            currentLength.setText("LONG");
-            currentLength.setTextColor(Color.parseColor("#FF0000")); // Color Red
-        }else if(view.getId() == R.id.None){
-            currentLength.setText("NONE");
-            currentLength.setTextColor(Color.parseColor("#028A0F"));
-        }else if(view.getId() == R.id.plus){
-            counterValInt++;
-            counterValue.setText("Total:    " +String.valueOf(counterValInt));
-        }else if(view.getId() == R.id.minus){
-            if(counterValInt >= 1) {
-                counterValInt--;
-            }
-            counterValue.setText("Total:    " + String.valueOf(counterValInt));
-        }
+//        if(view.getId() == R.id.Short) {
+//            currentLength.setText("SHORT");
+//            currentLength.setTextColor(Color.parseColor("#0000FF"));
+//        }else if(view.getId() == R.id.Medium){
+//            currentLength.setText("MEDIUM");
+//            currentLength.setTextColor(Color.parseColor("#FFA500"));
+//        }else if(view.getId() == R.id.Long){
+//            currentLength.setText("LONG");
+//            currentLength.setTextColor(Color.parseColor("#FF0000")); // Color Red
+//        }else if(view.getId() == R.id.None){
+//            currentLength.setText("NONE");
+//            currentLength.setTextColor(Color.parseColor("#028A0F"));
+//        }else if(view.getId() == R.id.plus){
+//            counterValInt++;
+//            counterValue.setText("Total:    " +String.valueOf(counterValInt));
+//        }else if(view.getId() == R.id.minus){
+//            if(counterValInt >= 1) {
+//                counterValInt--;
+//            }
+//            counterValue.setText("Total:    " + String.valueOf(counterValInt));
+//        }
     }
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
