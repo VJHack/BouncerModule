@@ -7,12 +7,14 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.bouncermodule.R;
+import com.example.bouncermodule.databinding.FragmentBarsBinding;
 import com.example.bouncermodule.databinding.FragmentMapBinding;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -22,11 +24,14 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+
+
+
 public class BarsFragment extends Fragment implements OnMapReadyCallback {
 
     private GoogleMap mMap;
 
-    private FragmentMapBinding binding;
+    private FragmentBarsBinding binding;
 
 
 
@@ -35,17 +40,13 @@ public class BarsFragment extends Fragment implements OnMapReadyCallback {
         BarsViewModel barsViewModel =
                 new ViewModelProvider(this).get(BarsViewModel.class);
 
-        binding = FragmentMapBinding.inflate(inflater, container, false);
+        binding = FragmentBarsBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
-//        final TextView textView = binding.textBars;
-//        barsViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
-//        barsViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
-
-        SupportMapFragment BarsFragment = (SupportMapFragment) getParentFragmentManager()
+        SupportMapFragment BarsFragment = (SupportMapFragment)getChildFragmentManager()
                 .findFragmentById(R.id.map);
         System.out.println("Barrrrrrrrrrrrr  " + BarsFragment);
-////        BarsFragment.getMapAsync(this);
+//        BarsFragment.getMapAsync(this);
 
 
         return root;
