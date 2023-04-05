@@ -18,6 +18,7 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
@@ -26,6 +27,12 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback {
     private FragmentMapBinding binding;
 
     private GoogleMap mMap;
+
+    Object[][] bars = {
+            {43.07247820000001, -89.38480299999999, "Paradise Lounge"},
+            {43.0753202, -89.39044, "The Plaza Tavern"},
+            {43.0740484, -89.3932195, "Chasers 2.0"}
+    };
 
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -70,6 +77,18 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback {
                 .position(sydney)
                 .title("Current location"));
         mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(sydney, 15));
+
+        for(int i = 0; i < bars.length; i++){
+
+
+            LatLng toAddBarMarker = new LatLng( Double.valueOf(bars[i][0].toString()), Double.valueOf(bars[i][1].toString()));
+            mMap.addMarker(new MarkerOptions()
+                    .position(toAddBarMarker)
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
+                    .title(bars[i][2].toString()));
+        }
+
+
 
 //
 //        for(int i = 0; i < bars.length; i++){
