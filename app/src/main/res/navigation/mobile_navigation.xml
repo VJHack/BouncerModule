@@ -6,15 +6,20 @@
     app:startDestination="@+id/navigation_home">
 
     <fragment
+        android:id="@+id/navigation_map"
+        android:name="com.example.bouncermodule.ui.dashboard.DashboardFragment"
+        android:label="@string/map"
+        tools:layout="@layout/fragment_map" />
+    <fragment
+        android:id="@+id/navigation_bars"
+        android:name="com.example.bouncermodule.ui.bars.BarsFragment"
+        android:label="Bars"
+        tools:layout="@layout/fragment_bars" />
+    <fragment
         android:id="@+id/navigation_home"
         android:name="com.example.bouncermodule.ui.home.HomeFragment"
         android:label="@string/title_home"
         tools:layout="@layout/fragment_home" />
 
-    <fragment
-        android:id="@+id/navigation_facerecognition"
-        android:name="com.example.bouncermodule.ui.dashboard.DashboardFragment"
-        android:label="@string/title_facerecognition"
-        tools:layout="@layout/fragment_facerecognition" />
 
 </navigation>
