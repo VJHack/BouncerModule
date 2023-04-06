@@ -14,9 +14,18 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.bouncermodule.Bars;
 import com.example.bouncermodule.R;
 import com.example.bouncermodule.databinding.ActivityMainBinding;
 import com.example.bouncermodule.databinding.FragmentHomeBinding;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class HomeFragment extends Fragment  implements View.OnClickListener {
     private TextView counterValue;
@@ -28,11 +37,14 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
 
     private Button plusButton;
     private Button minusButton;
-    private int counterValInt = 0;
+    private int counterValInt;
 
     private ImageView photoIdImageView;
     private Button photoIdButton;
     private FragmentHomeBinding binding;
+    // Firebase variables
+    private DatabaseReference mDatabase;
+    private Map<String, Bars> barsMap = new HashMap<>();
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -41,7 +53,6 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
 
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
-
 
         View myView = inflater.inflate(R.layout.fragment_home, container, false);
         noneButton = (Button) myView.findViewById(R.id.None);
@@ -62,6 +73,37 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
 
         final TextView textView = binding.textHome;
         homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+
+        DatabaseReference barRef = mDatabase.child("bars/");
+        barRef.addValueEventListener(new ValueEventListener(){
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot){
+                for(DataSnapshot data: dataSnapshot.getChildren()){
+                    String barName = data.getKey();
+                    String lineLength = data.child("lineLength").getValue().toString();
+                    Integer lineCount = Integer.parseInt(data.child("lineCount").getValue().toString());
+                    Double latitude = Double.parseDouble(data.child("latitude").getValue().toString());
+                    Double longitude = Double.parseDouble(data.child("longitude").getValue().toString());;
+                    Bars tempBar = new Bars(lineLength, lineCount, longitude, latitude);
+                    barsMap.put(barName, tempBar);
+                }
+
+                // Make "Mondays" a variable for which bouncer is using counter
+                Bars tempBar = barsMap.get("Mondays");
+                counterValInt = tempBar.getLineCount();
+                counterValue.setText("Total:    " +String.valueOf(counterValInt));
+                currentLength.setText(tempBar.getLineLength());
+                lineLengthColor();
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+
+        });
         return myView;
     }
 
@@ -69,17 +111,17 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
         if(view.getId() == R.id.Short) {
             Log.d("LOG", "NONE CLICKED");
             currentLength.setText("SHORT");
-            currentLength.setTextColor(Color.parseColor("#0000FF"));
+            lineLengthColor();
         }else if(view.getId() == R.id.Medium){
             Log.d("LOG", "MEDIUM CLICKED");
             currentLength.setText("MEDIUM");
-            currentLength.setTextColor(Color.parseColor("#FFA500"));
+            lineLengthColor();
         }else if(view.getId() == R.id.Long){
             currentLength.setText("LONG");
-            currentLength.setTextColor(Color.parseColor("#FF0000")); // Color Red
+            lineLengthColor();
         }else if(view.getId() == R.id.None){
             currentLength.setText("NONE");
-            currentLength.setTextColor(Color.parseColor("#028A0F"));
+            lineLengthColor();
         }else if(view.getId() == R.id.plus){
             counterValInt++;
             counterValue.setText("Total:    " +String.valueOf(counterValInt));
@@ -89,6 +131,30 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
             }
             counterValue.setText("Total:    " + String.valueOf(counterValInt));
         }
+
+        // Changing the line count and line length of Mondays
+        Bars tempBar = barsMap.get("Mondays");
+        tempBar.setLineCount(counterValInt);
+        tempBar.setLineLength((String) currentLength.getText());
+        mDatabase.child("bars").child("Mondays").setValue(tempBar);
+    }
+
+    public void lineLengthColor() {
+        switch (currentLength.getText().toString()) {
+            case("LONG"):
+                currentLength.setTextColor(Color.parseColor("#FF0000")); // Red
+                break;
+            case("MEDIUM"):
+                currentLength.setTextColor(Color.parseColor("#FFA500")); // Yellow
+                break;
+            case("SHORT"):
+                currentLength.setTextColor(Color.parseColor("#0000FF")); // Blue
+                break;
+            default:
+                currentLength.setTextColor(Color.parseColor("#028A0F")); // Green
+        }
+
+
     }
 
     @Override
