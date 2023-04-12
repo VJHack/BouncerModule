@@ -71,29 +71,17 @@ public class HomeFragment extends Fragment {
             @Override
             public void onClick(View v)
             {
-                if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
+                if (ContextCompat.checkSelfPermission(getActivity(), Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                    getActivity().requestPermissions(new String[]{Manifest.permission.CAMERA}, 10);
+                }
+                else{
                     Intent intent = new Intent(getActivity(), CameraActivity.class);
                     startActivity(intent);
-                } else {
-                    getActivity().requestPermissions(new String[]{Manifest.permission.CAMERA}, 10);
                 }
             }
         });
-        View cameraView = inflater.inflate(R.layout.activity_camera,
-                container, false);
-        Button photoButton = (Button) cameraView.findViewById(R.id.takePhotoButton);
-        photoButton.setOnClickListener(new View.OnClickListener(){
-            @Override
-            public void onClick(View v)
-            {
-                Log.i("RILEY TEST", "PHOTO BUTTON CLICKED");
-            }
-        });
-
         // get images from camera
-        Image mediaImage = null;
-        //int rotation = getRotationCompensation();
-        //InputImage image = InputImage.fromMediaImage(mediaImage, rotation);
+        //View cameraView = inflater.inflate(R.layout.activity_camera, container, false);
 
 
         return bouncerView;

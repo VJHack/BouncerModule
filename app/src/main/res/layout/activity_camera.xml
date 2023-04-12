@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".ui.CameraActivity">
 
     <FrameLayout
@@ -11,20 +12,35 @@
         android:id="@+id/container">
         <androidx.camera.view.PreviewView
             android:id="@+id/previewView"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"/>
     </FrameLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        app:layout_constraintHeight_percent="0.8"
+        app:layout_constraintWidth_percent="0.8"
         android:orientation="vertical"
-        android:gravity="bottom">
+        android:gravity="bottom" >
         <Button
             android:id="@+id/takePhotoButton"
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Take Photo"
-            android:gravity="center"/>
+            android:text="Take Face Photo"
+            android:gravity="center"
+            android:layout_alignParentBottom="true"/>
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:scaleType="centerInside"
+            android:id="@+id/image1View">
+        </ImageView>
+        <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:scaleType="centerInside"
+            android:id="@+id/image2View">
+        </ImageView>
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
