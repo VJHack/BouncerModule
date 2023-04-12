@@ -45,7 +45,6 @@ public class BarsFragment extends Fragment implements OnMapReadyCallback {
 
         SupportMapFragment BarsFragment = (SupportMapFragment)getChildFragmentManager()
                 .findFragmentById(R.id.map);
-        System.out.println("Barrrrrrrrrrrrr  " + BarsFragment);
 //        BarsFragment.getMapAsync(this);
 
 
