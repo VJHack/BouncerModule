@@ -157,6 +157,10 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
 
     }
 
+    private String parseEmail(String username) {
+        return username.replaceAll(".", "_");
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
