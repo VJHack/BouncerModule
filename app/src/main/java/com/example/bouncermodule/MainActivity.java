@@ -1,43 +1,42 @@
 package com.example.bouncermodule;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.example.bouncermodule.ui.bars.BarsFragment;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.OnMapReadyCallback;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
-import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.fragment.app.Fragment;
-import androidx.fragment.app.FragmentActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 
 import com.example.bouncermodule.databinding.ActivityMainBinding;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private GoogleMap mMap;
-
     private ActivityMainBinding binding;
-
     private TextView counterValue;
     private TextView currentLength;
     private Button noneButton;
@@ -48,11 +47,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Button plusButton;
     private Button minusButton;
 
-    private Fragment mapFragment;
+    // Grab value from database based on desired bar
     private int counterValInt = 0;
 
     private ImageView photoIdImageView;
     private Button photoIdButton;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,12 +76,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //        minusButton = (Button) findViewById(R.id.minus);
 //        minusButton.setOnClickListener(this);
 
-
-
-//        BarsFragment.getMapAsync(this);
-
         //Request for camera runtime permission
-
+//        if (ContextCompat.checkSelfPermission( MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+//            ActivityCompat.requestPermissions(MainActivity.this, new String[]{
+//                    Manifest.permission.CAMERA
+//            },100);
 //        }
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
@@ -91,35 +90,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_activity_main);
         NavigationUI.setupActionBarWithNavController(this, navController, appBarConfiguration);
         NavigationUI.setupWithNavController(binding.navView, navController);
+
+
     }
+
+    // used for reading in file filled with new bars
+//    public void writeNewBar(String barId, String lineLength, Integer lineCount, Double longitude, Double latitude) {
+//        if (barsMap.containsKey(barId) == false){
+//            Bars bar = new Bars(lineLength, lineCount, longitude, latitude);
+//            Log.d("Writing new Bar", barId);
+//            barsMap.put(barId, bar);
+//            mDatabase.child("bars").child(barId).setValue(bar);
+//        }
+//    }
 
     @Override
     public void onClick(View view) {
-//        if(view.getId() == R.id.Short) {
-//            currentLength.setText("SHORT");
-//            currentLength.setTextColor(Color.parseColor("#0000FF"));
-//        }else if(view.getId() == R.id.Medium){
-//            currentLength.setText("MEDIUM");
-//            currentLength.setTextColor(Color.parseColor("#FFA500"));
-//        }else if(view.getId() == R.id.Long){
-//            currentLength.setText("LONG");
-//            currentLength.setTextColor(Color.parseColor("#FF0000")); // Color Red
-//        }else if(view.getId() == R.id.None){
-//            currentLength.setText("NONE");
-//            currentLength.setTextColor(Color.parseColor("#028A0F"));
-//        }else if(view.getId() == R.id.plus){
-//            counterValInt++;
-//            counterValue.setText("Total:    " +String.valueOf(counterValInt));
-//        }else if(view.getId() == R.id.minus){
-//            if(counterValInt >= 1) {
-//                counterValInt--;
-//            }
-//            counterValue.setText("Total:    " + String.valueOf(counterValInt));
-//        }
+        if(view.getId() == R.id.Short) {
+            currentLength.setText("SHORT");
+            currentLength.setTextColor(Color.parseColor("#0000FF"));
+        }else if(view.getId() == R.id.Medium){
+            currentLength.setText("MEDIUM");
+            currentLength.setTextColor(Color.parseColor("#FFA500"));
+        }else if(view.getId() == R.id.Long){
+            currentLength.setText("LONG");
+            currentLength.setTextColor(Color.parseColor("#FF0000")); // Color Red
+        }else if(view.getId() == R.id.None){
+            currentLength.setText("NONE");
+            currentLength.setTextColor(Color.parseColor("#028A0F"));
+        }else if(view.getId() == R.id.plus){
+            counterValInt++;
+            counterValue.setText("Total:    " +String.valueOf(counterValInt));
+        }else if(view.getId() == R.id.minus){
+            if(counterValInt >= 1) {
+                counterValInt--;
+            }
+            counterValue.setText("Total:    " + String.valueOf(counterValInt));
+        }
     }
-
-
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);

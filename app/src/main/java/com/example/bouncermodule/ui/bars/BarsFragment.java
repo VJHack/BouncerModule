@@ -1,6 +1,7 @@
 package com.example.bouncermodule.ui.bars;
 
 import android.os.Bundle;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentActivity;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.bouncermodule.Bars;
 import com.example.bouncermodule.R;
 import com.example.bouncermodule.databinding.FragmentBarsBinding;
 import com.example.bouncermodule.databinding.FragmentHomeBinding;
@@ -25,14 +27,23 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class BarsFragment extends Fragment  {
 
 
     private FragmentBarsBinding binding;
+    private DatabaseReference mDatabase;
+    private Map<String, Bars> barsMap = new HashMap<>();
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -43,16 +54,36 @@ public class BarsFragment extends Fragment  {
         View root = binding.getRoot();
         View contentView = inflater.inflate(R.layout.fragment_bars, container, false);
         ListView listView = contentView.findViewById(R.id.bar_list);
-        // sample data
-        List<String> list = new ArrayList<>();
-        for(int i=0;i<100;i++)
-            list.add("Item "+i);
 
-        CustomAdapter listAdapter = new CustomAdapter(list);
-        listView.setAdapter(listAdapter);
+        mDatabase = FirebaseDatabase.getInstance().getReference();
 
+        DatabaseReference barRef = mDatabase.child("bars/");
+        barRef.addValueEventListener(new ValueEventListener(){
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot){
+                List<String> list = new ArrayList<>();
+                for(DataSnapshot data: dataSnapshot.getChildren()){
+                    String barName = data.getKey();
+                    String lineLength = data.child("lineLength").getValue().toString();
+                    Integer lineCount = Integer.parseInt(data.child("lineCount").getValue().toString());
+                    Double latitude = Double.parseDouble(data.child("latitude").getValue().toString());
+                    Double longitude = Double.parseDouble(data.child("longitude").getValue().toString());;
+                    Bars tempBar = new Bars(lineLength, lineCount, longitude, latitude);
+                    barsMap.put(barName, tempBar);
+                    list.add(barName);
+                }
+                CustomAdapter listAdapter = new CustomAdapter(list);
+                listView.setAdapter(listAdapter);
 
-        System.out.println("left tab  ");
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+
+        });
+
 ////        BarsFragment.getMapAsync(this);
 
 
@@ -85,8 +116,12 @@ public class BarsFragment extends Fragment  {
         @Override
         public View getView(int i, View view, ViewGroup viewGroup) {
             TextView textView = new TextView(getContext());
-            textView.setText(items.get(i));
-            textView.setText("Bar Name:         Kollege Klub\nWait Time:         35 Minutes");
+            String barName = items.get(i);
+            textView.setText(barName);
+            String lineLength = barsMap.get(barName).getLineLength();
+            // Capitalize first letter then make rest of string lower case
+            lineLength = lineLength.substring(0, 1).toUpperCase() + lineLength.substring(1).toLowerCase();
+            textView.setText("Bar Name:         " + barName + "\nLine Length:      " + lineLength);
 
             return textView;
         }
