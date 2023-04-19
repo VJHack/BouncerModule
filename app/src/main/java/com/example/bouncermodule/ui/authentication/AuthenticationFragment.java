@@ -142,7 +142,9 @@ public class AuthenticationFragment extends AppCompatActivity {
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "createUserWithEmail:failure", task.getException());
-                            Toast.makeText(getApplicationContext(), "Authentication failed.",
+                            String error = task.getException().toString();
+                            String printedError = error.substring(error.lastIndexOf(":") + 2, error.length() - 1);
+                            Toast.makeText(getApplicationContext(), printedError,
                                     Toast.LENGTH_SHORT).show();
                             updateUI(null);
                         }
@@ -169,7 +171,9 @@ public class AuthenticationFragment extends AppCompatActivity {
                         } else {
                             // If sign in fails, display a message to the user.
                             Log.w(TAG, "signInWithEmail:failure", task.getException());
-                            Toast.makeText(getApplicationContext(), "Authentication failed.",
+                            String error = task.getException().toString();
+                            String printedError = error.substring(error.lastIndexOf(":") + 2, error.length() - 1);
+                            Toast.makeText(getApplicationContext(), printedError,
                                     Toast.LENGTH_SHORT).show();
                             updateUI(null);
                         }
