@@ -48,6 +48,7 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
     private Map<String, Bars> barsMap = new HashMap<>();
 
     private String associatedBar;
+    private Boolean Verified;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -73,6 +74,8 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
         plusButton.setOnClickListener((View.OnClickListener) this);
         minusButton = (Button) myView.findViewById(R.id.minus);
         minusButton.setOnClickListener((View.OnClickListener) this);
+
+        Verified = true;
 
         final TextView textView = binding.textHome;
         homeViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
@@ -116,6 +119,11 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
                     lineLengthColor();
                 }catch(Exception e) {
                     // If in here the user is a regular user and not a bouncer
+                    Verified = false;
+                    counterValInt = 0;
+                    counterValue.setText("Total:    " +String.valueOf(counterValInt));
+                    currentLength.setText("NONE");
+                    lineLengthColor();
                 }
             }
 
@@ -154,10 +162,12 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
         }
 
         // Changing the line count and line length of Mondays
-        Bars tempBar = barsMap.get(associatedBar);
-        tempBar.setLineCount(counterValInt);
-        tempBar.setLineLength((String) currentLength.getText());
-        mDatabase.child("bars").child(associatedBar).setValue(tempBar);
+        if (Verified) {
+            Bars tempBar = barsMap.get(associatedBar);
+            tempBar.setLineCount(counterValInt);
+            tempBar.setLineLength((String) currentLength.getText());
+            mDatabase.child("bars").child(associatedBar).setValue(tempBar);
+        }
     }
 
     public void lineLengthColor() {
