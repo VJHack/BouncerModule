@@ -18,6 +18,7 @@ import com.example.bouncermodule.Bars;
 import com.example.bouncermodule.R;
 import com.example.bouncermodule.databinding.ActivityMainBinding;
 import com.example.bouncermodule.databinding.FragmentHomeBinding;
+import com.example.bouncermodule.ui.authentication.AuthenticationFragment;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -45,6 +46,8 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
     // Firebase variables
     private DatabaseReference mDatabase;
     private Map<String, Bars> barsMap = new HashMap<>();
+
+    private String associatedBar;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -89,13 +92,6 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
                     Bars tempBar = new Bars(lineLength, lineCount, longitude, latitude);
                     barsMap.put(barName, tempBar);
                 }
-
-                // Make "Mondays" a variable for which bouncer is using counter
-                Bars tempBar = barsMap.get("Mondays");
-                counterValInt = tempBar.getLineCount();
-                counterValue.setText("Total:    " +String.valueOf(counterValInt));
-                currentLength.setText(tempBar.getLineLength());
-                lineLengthColor();
             }
 
             @Override
@@ -104,6 +100,31 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
             }
 
         });
+
+        DatabaseReference userRef = mDatabase.child("VerifiedUsers/");
+
+        userRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                try {
+                    String userEmail = parseEmail(AuthenticationFragment.getEmail());
+                    associatedBar = snapshot.child(userEmail).getValue().toString();
+                    Bars tempBar = barsMap.get(associatedBar);
+                    counterValInt = tempBar.getLineCount();
+                    counterValue.setText("Total:    " +String.valueOf(counterValInt));
+                    currentLength.setText(tempBar.getLineLength());
+                    lineLengthColor();
+                }catch(Exception e) {
+                    // If in here the user is a regular user and not a bouncer
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
         return myView;
     }
 
@@ -133,10 +154,10 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
         }
 
         // Changing the line count and line length of Mondays
-        Bars tempBar = barsMap.get("Mondays");
+        Bars tempBar = barsMap.get(associatedBar);
         tempBar.setLineCount(counterValInt);
         tempBar.setLineLength((String) currentLength.getText());
-        mDatabase.child("bars").child("Mondays").setValue(tempBar);
+        mDatabase.child("bars").child(associatedBar).setValue(tempBar);
     }
 
     public void lineLengthColor() {
@@ -158,7 +179,7 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
     }
 
     private String parseEmail(String username) {
-        return username.replaceAll(".", "_");
+        return username.replaceAll("[.]", "_");
     }
 
     @Override
