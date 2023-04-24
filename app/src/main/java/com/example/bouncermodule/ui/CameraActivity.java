@@ -13,10 +13,13 @@ import androidx.camera.view.PreviewView;
 import androidx.core.content.ContextCompat;
 import androidx.lifecycle.LifecycleOwner;
 
+import android.content.pm.ApplicationInfo;
+import android.content.pm.ComponentInfo;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
-import android.media.Image;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.StrictMode;
 import android.util.Base64;
@@ -37,6 +40,7 @@ import com.amazonaws.services.rekognition.model.CompareFacesMatch;
 import com.amazonaws.services.rekognition.model.CompareFacesRequest;
 import com.amazonaws.services.rekognition.model.CompareFacesResult;
 import com.amazonaws.services.rekognition.model.ComparedFace;
+import com.amazonaws.services.rekognition.model.Image;
 import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.NetworkResponse;
@@ -64,10 +68,12 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
 public class CameraActivity extends AppCompatActivity implements ImageAnalysis.Analyzer {
@@ -205,8 +211,6 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
                                         for (Face face : faces) {
                                             Rect bounds = face.getBoundingBox();
                                             outputImage1 = Bitmap.createBitmap(img1, bounds.left, bounds.top, bounds.width(), bounds.height());
-                                            //float rotY = face.getHeadEulerAngleY();  // Head is rotated to the right rotY degrees
-                                            //float rotZ = face.getHeadEulerAngleZ();  // Head is tilted sideways rotZ degrees
                                             Log.i("Face Detection", "Bounding box: " + bounds.toString());
                                             break;
                                         }
@@ -234,8 +238,6 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
                                         for (Face face : faces) {
                                             Rect bounds = face.getBoundingBox();
                                             outputImage2 = Bitmap.createBitmap(img2, bounds.left, bounds.top, bounds.width(), bounds.height());
-                                            //float rotY = face.getHeadEulerAngleY();  // Head is rotated to the right rotY degrees
-                                            //float rotZ = face.getHeadEulerAngleZ();  // Head is tilted sideways rotZ degrees
                                             Log.i("Face Detection", "Bounding box: " + bounds.toString());
                                             break;
                                         }
@@ -246,8 +248,6 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
                                         bytes2 = out2.toByteArray();
                                         // For facial comparison -----
                                         compareFaces();
-                                        //faceComparison();
-                                        //Log.i("FACE COMPARISON RESULT", faceComparisonConfidence.toString());
                                     }
                                 })
                         .addOnFailureListener(
@@ -260,182 +260,39 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
     }
 
     public void compareFaces() {
-       /* TODO: GET RID OF THIS EVENTUALLY, MOVE INTO ASYNC TASK */
-
+       /* TODO: MAYBE GET RID OF THIS EVENTUALLY, MOVE INTO ASYNC TASK */
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
-
         StrictMode.setThreadPolicy(policy);
+
         Float similarityThreshold = 70F;
-
-        ByteBuffer sourceImageBytes = null;
-        ByteBuffer targetImageBytes = null;
-
-        AmazonRekognition rekognitionClient = new AmazonRekognitionClient(new BasicAWSCredentials("AKIA22X4AXTTUCNPAKHM", "VP0xId7YoTArqnp4Xk6s4WS+kA4mAgaV2dwN5YcP"));
-
-        com.amazonaws.services.rekognition.model.Image source = new com.amazonaws.services.rekognition.model.Image().withBytes(ByteBuffer.wrap(bytes1));
-        com.amazonaws.services.rekognition.model.Image target = new com.amazonaws.services.rekognition.model.Image().withBytes(ByteBuffer.wrap(bytes2));
-
-        CompareFacesRequest request = new CompareFacesRequest()
-                .withSourceImage(source)
-                .withTargetImage(target)
-                .withSimilarityThreshold(similarityThreshold);
-        // Call operation
-        CompareFacesResult compareFacesResult = rekognitionClient.compareFaces(request);
-
-        // Display results
-        List <CompareFacesMatch> faceDetails = compareFacesResult.getFaceMatches();
-        for (CompareFacesMatch match: faceDetails){
-            ComparedFace face= match.getFace();
-            Log.i("AWS FACE COMPARE CONFIDENCE", face.getConfidence().toString());
-            TextView tv = findViewById(R.id.confidenceText);
-            tv.setText(face.getConfidence().toString());
-        }
-    }
-
-    /*
-    public static void compareTwoFaces(RekognitionClient rekClient, Float similarityThreshold, String sourceImage, String targetImage) {
+        // must be wrapped in try/catch in case we can't find keys from local properties
         try {
-            InputStream sourceStream = new FileInputStream(sourceImage);
-            InputStream tarStream = new FileInputStream(targetImage);
-            SdkBytes sourceBytes = SdkBytes.fromInputStream(sourceStream);
-            SdkBytes targetBytes = SdkBytes.fromInputStream(tarStream);
+            ApplicationInfo applicationInfo = getApplicationContext().getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
+            String accessKey = applicationInfo.metaData.getString("AWS_ACCESS_KEY");
+            String secretKey = applicationInfo.metaData.getString("AWS_SECRET_KEY");
 
-            // Create an Image object for the source image.
-            Image souImage = Image.builder()
-                    .bytes(sourceBytes)
-                    .build();
+            AmazonRekognition rekognitionClient = new AmazonRekognitionClient(new BasicAWSCredentials(accessKey, secretKey));
 
-            Image tarImage = Image.builder()
-                    .bytes(targetBytes)
-                    .build();
+            Image source = new Image().withBytes(ByteBuffer.wrap(bytes1));
+            Image target = new Image().withBytes(ByteBuffer.wrap(bytes2));
 
-            CompareFacesRequest facesRequest = CompareFacesRequest.builder()
-                    .sourceImage(souImage)
-                    .targetImage(tarImage)
-                    .similarityThreshold(similarityThreshold)
-                    .build();
-
-            // Compare the two images.
-            CompareFacesResponse compareFacesResult = rekClient.compareFaces(facesRequest);
-            List<CompareFacesMatch> faceDetails = compareFacesResult.faceMatches();
+            CompareFacesRequest request = new CompareFacesRequest()
+                    .withSourceImage(source)
+                    .withTargetImage(target)
+                    .withSimilarityThreshold(similarityThreshold);
+            // Call operation
+            CompareFacesResult compareFacesResult = rekognitionClient.compareFaces(request);
+            // Display results
+            List <CompareFacesMatch> faceDetails = compareFacesResult.getFaceMatches();
             for (CompareFacesMatch match: faceDetails){
-                ComparedFace face= match.face();
-                BoundingBox position = face.boundingBox();
-                System.out.println("Face at " + position.left().toString()
-                        + " " + position.top()
-                        + " matches with " + face.confidence().toString()
-                        + "% confidence.");
-
+                ComparedFace face= match.getFace();
+                Log.i("AWS FACE COMPARE CONFIDENCE", face.getConfidence().toString());
+                TextView tv = findViewById(R.id.confidenceText);
+                tv.setText(face.getConfidence().toString());
             }
-            List<ComparedFace> uncompared = compareFacesResult.unmatchedFaces();
-            System.out.println("There was " + uncompared.size() + " face(s) that did not match");
-            System.out.println("Source image rotation: " + compareFacesResult.sourceImageOrientationCorrection());
-            System.out.println("target image rotation: " + compareFacesResult.targetImageOrientationCorrection());
-
-        } catch(RekognitionException | FileNotFoundException e) {
-            System.out.println("Failed to load source image " + sourceImage);
-            System.exit(1);
         }
-    }*/
-
-    private void faceComparisonOld() {
-        // url to post our data
-        String url = "https://faceapi.mxface.ai/api/v3/face/verify";
-
-        // creating a new variable for our request queue
-        RequestQueue queue = Volley.newRequestQueue(CameraActivity.this);
-        /*StringRequest request = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                // on below line we are displaying a success toast message.
-                Log.i("FACE COMPARISON", "Making Request");
-                try {
-                    // on below line we are parsing the response
-                    // to json object to extract data from it.
-                    JSONObject respObj = new JSONObject(response);
-
-                    // below are the strings which we
-                    // extract from our json object.
-                    Integer matchResult = respObj.getInt("matchResult");
-                    faceComparisonConfidence = matchResult;
-                    Log.i("FACE COMPARISON RESULT", faceComparisonConfidence.toString());
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                // method to handle errors.
-                //erddddddddddddddddddddddddLog.i("FACE COMPARISON", error.getMessage());
-            }
-        }) {
-            @Override
-            protected Map<String, String> getParams() {
-                Map<String, String> params = new HashMap<String, String>();
-                String en1 = Base64.encodeToString(bytes1, Base64.DEFAULT);
-                String en2 = Base64.encodeToString(bytes2, Base64.DEFAULT);
-                params.put("encoded_image1", en1);
-                params.put("encoded_image2", en2);
-                Log.i("FACE COMPARISON", en1);
-                // at last we are
-                // returning our params.
-                return params;
-            }
-
-            @Override
-            public Map<String, String> getHeaders() {
-                Map<String, String>  params = new HashMap<String, String>();
-                params.put("Content-Type", "application/json; charset=utf-8");
-                params.put("Subscriptionkey", "YIHCIvHyTG1YvOkmnw-4wmA4nIfC31477");
-                return params;
-            }
-        };*/
-        // below line is to make
-        // a json object request.
-        JSONObject params = new JSONObject();
-        try {
-            String en1 = Base64.encodeToString(bytes1, Base64.DEFAULT);
-            String en2 = Base64.encodeToString(bytes2, Base64.DEFAULT);
-            params.put("encoded_image1", en1);
-            params.put("encoded_image1", en2);
+        catch (PackageManager.NameNotFoundException e){
+            Log.e("FAILED GETTING METADATA AWS KEYS FROM LOCAL PROPERTIES", e.getMessage());
         }
-        catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST,
-                url, params,
-                new Response.Listener<JSONObject>() {
-
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Log.d("TAG", response.toString());
-                    }
-                }, new Response.ErrorListener() {
-
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                VolleyLog.d("TAG", "Error: " + error.getMessage());
-            }
-        }) {
-
-            /**
-             * Passing some request headers
-             * */
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                HashMap<String, String> headers = new HashMap<String, String>();
-                headers.put("Content-Type", "application/json; charset=utf-8");
-                headers.put("Subscriptionkey", "YIHCIvHyTG1YvOkmnw-4wmA4nIfC31477");
-                return headers;
-            }
-
-        };
-        jsonObjReq.setRetryPolicy(new DefaultRetryPolicy(
-                0,
-                0,
-                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-        queue.add(jsonObjReq);
     }
 }

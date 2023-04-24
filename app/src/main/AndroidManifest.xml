@@ -25,6 +25,13 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
 
+        <meta-data
+            android:name="AWS_ACCESS_KEY"
+            android:value="${AWS_ACCESS_KEY}" />
+        <meta-data
+            android:name="AWS_SECRET_KEY"
+            android:value="${AWS_SECRET_KEY}" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
