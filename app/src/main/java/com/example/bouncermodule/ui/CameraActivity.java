@@ -18,6 +18,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.media.Image;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.util.Size;
 import android.view.Menu;
@@ -28,6 +29,15 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.NetworkResponse;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.HttpHeaderParser;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.example.bouncermodule.R;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
@@ -39,11 +49,17 @@ import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-public class CameraActivity extends AppCompatActivity implements ImageAnalysis.Analyzer{
+public class CameraActivity extends AppCompatActivity implements ImageAnalysis.Analyzer {
     private PreviewView previewView;
     private Preview preview;
     private ImageCapture imageCapture;
@@ -55,6 +71,11 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
     public static Bitmap img2;
     public static Bitmap outputImage1;
     public static Bitmap outputImage2;
+    private static ByteArrayOutputStream out1;
+    private static byte[] bytes1;
+    private static ByteArrayOutputStream out2;
+    private static byte[] bytes2;
+    public Integer faceComparisonConfidence;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,13 +96,12 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
             }
         }, ContextCompat.getMainExecutor(this));
         Button photoButton = (Button) findViewById(R.id.takePhotoButton);
-        photoButton.setOnClickListener(new View.OnClickListener(){
+        photoButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v)
-            {
+            public void onClick(View v) {
                 Button takePhotoButton = findViewById(R.id.takePhotoButton);
                 // if we haven't captured first image yet, set first image
-                if(!firstImageCaptured){
+                if (!firstImageCaptured) {
                     firstImageCaptured = true;
                     //takePhoto(img1);
                     img1 = previewView.getBitmap();
@@ -91,7 +111,7 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
                     takePhotoButton.setText("Take ID Photo");
                 }
                 // if first image has been captured, set second image
-                else{
+                else {
                     firstImageCaptured = false;
                     img2 = previewView.getBitmap();
                     inputImage2 = InputImage.fromBitmap(img2, 0);
@@ -136,12 +156,12 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
         preview.setSurfaceProvider(previewView.getSurfaceProvider());
         ImageCapture.Builder builder = new ImageCapture.Builder();
         imageCapture = builder.build();
-        cameraProvider.bindToLifecycle((LifecycleOwner)this, cameraSelector,
+        cameraProvider.bindToLifecycle((LifecycleOwner) this, cameraSelector,
                 imageAnalysis, preview, imageCapture);
     }
 
     @Override
-    public void analyze(ImageProxy image){
+    public void analyze(ImageProxy image) {
         // image processing here
         Bitmap bitmap = previewView.getBitmap();
         // TODO: this rotation degree might not be correct every time, look into more if we have time
@@ -157,7 +177,7 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
         });*/
     }
 
-    public void checkFaces(){
+    public void checkFaces() {
         FaceDetectorOptions faceOptions = new FaceDetectorOptions.Builder()
                 .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
                 .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
@@ -177,11 +197,13 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
                                             //float rotY = face.getHeadEulerAngleY();  // Head is rotated to the right rotY degrees
                                             //float rotZ = face.getHeadEulerAngleZ();  // Head is tilted sideways rotZ degrees
                                             Log.i("Face Detection", "Bounding box: " + bounds.toString());
+                                            break;
                                         }
-
                                         ImageView iv1 = (ImageView) findViewById(R.id.image1View);
                                         iv1.setImageBitmap(outputImage1);
-
+                                        out1 = new ByteArrayOutputStream();
+                                        outputImage1.compress(Bitmap.CompressFormat.PNG, 100, out1);
+                                        bytes1 = out1.toByteArray();
                                     }
                                 })
                         .addOnFailureListener(
@@ -204,11 +226,16 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
                                             //float rotY = face.getHeadEulerAngleY();  // Head is rotated to the right rotY degrees
                                             //float rotZ = face.getHeadEulerAngleZ();  // Head is tilted sideways rotZ degrees
                                             Log.i("Face Detection", "Bounding box: " + bounds.toString());
+                                            break;
                                         }
-
                                         ImageView iv2 = (ImageView) findViewById(R.id.image2View);
-                                        iv2.setImageBitmap(outputImage1);
-
+                                        iv2.setImageBitmap(outputImage2);
+                                        out2 = new ByteArrayOutputStream();
+                                        outputImage2.compress(Bitmap.CompressFormat.PNG, 100, out2);
+                                        bytes2 = out2.toByteArray();
+                                        // For facial comparison -----
+                                        faceComparison();
+                                        //Log.i("FACE COMPARISON RESULT", faceComparisonConfidence.toString());
                                     }
                                 })
                         .addOnFailureListener(
@@ -218,5 +245,67 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
                                         Log.i("Face Detection", "Face Detection Failed");
                                     }
                                 });
+    }
+
+    private void faceComparison() {
+        // url to post our data
+        String url = "https://faceapi.mxface.ai/api/v3/face/verify";
+
+        // creating a new variable for our request queue
+        RequestQueue queue = Volley.newRequestQueue(CameraActivity.this);
+        StringRequest request = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                // on below line we are displaying a success toast message.
+                Log.i("FACE COMPARISON", "Making Request");
+                try {
+                    // on below line we are parsing the response
+                    // to json object to extract data from it.
+                    JSONObject respObj = new JSONObject(response);
+
+                    // below are the strings which we
+                    // extract from our json object.
+                    Integer matchResult = respObj.getInt("matchResult");
+                    faceComparisonConfidence = matchResult;
+                    Log.i("FACE COMPARISON RESULT", faceComparisonConfidence.toString());
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                // method to handle errors.
+                //erddddddddddddddddddddddddLog.i("FACE COMPARISON", error.getMessage());
+            }
+        }) {
+            @Override
+            protected Map<String, String> getParams() {
+                Map<String, String> params = new HashMap<String, String>();
+                String en1 = Base64.encodeToString(bytes1, Base64.DEFAULT);
+                String en2 = Base64.encodeToString(bytes2, Base64.DEFAULT);
+                params.put("encoded_image1", en1);
+                params.put("encoded_image2", en2);
+                Log.i("FACE COMPARISON", en1);
+                // at last we are
+                // returning our params.
+                return params;
+            }
+
+            @Override
+            public Map<String, String> getHeaders() {
+                Map<String, String>  params = new HashMap<String, String>();
+                params.put("Content-Type", "application/json; charset=utf-8");
+                params.put("Subscriptionkey", "YIHCIvHyTG1YvOkmnw-4wmA4nIfC31477");
+                return params;
+            }
+        };
+        // below line is to make
+        // a json object request.
+        request.setRetryPolicy(new DefaultRetryPolicy(
+                0,
+                -1,
+                DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
+        queue.add(request);
     }
 }
