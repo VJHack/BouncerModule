@@ -1,5 +1,6 @@
 package com.example.bouncermodule.ui.home;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -14,9 +15,11 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.bouncermodule.MainActivity;
 import com.example.bouncermodule.R;
 import com.example.bouncermodule.databinding.ActivityMainBinding;
 import com.example.bouncermodule.databinding.FragmentHomeBinding;
+import com.example.bouncermodule.ui.authentication.AuthenticationFragment;
 
 public class HomeFragment extends Fragment  implements View.OnClickListener {
     private TextView counterValue;
@@ -28,6 +31,8 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
 
     private Button plusButton;
     private Button minusButton;
+    private Button signOutButton;
+    private Button resetButton;
     private int counterValInt = 0;
 
     private ImageView photoIdImageView;
@@ -52,6 +57,10 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
         mediumButton.setOnClickListener((View.OnClickListener) this);
         longButton = (Button) myView.findViewById(R.id.Long);
         longButton.setOnClickListener((View.OnClickListener) this);
+        signOutButton = (Button) myView.findViewById(R.id.signOut);
+        signOutButton.setOnClickListener((View.OnClickListener) this);
+        resetButton = (Button) myView.findViewById(R.id.Reset);
+        resetButton.setOnClickListener((View.OnClickListener) this);
 
         currentLength = (TextView) myView.findViewById(R.id.CurrentLengthValue);
         counterValue = (TextView) myView.findViewById(R.id.Total_Value);
@@ -88,6 +97,16 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
                 counterValInt--;
             }
             counterValue.setText("Total:    " + String.valueOf(counterValInt));
+        }else if(view.getId() == R.id.signOut){
+            AuthenticationFragment.signOut();
+            Intent intent = new Intent(getActivity(), AuthenticationFragment.class);
+            startActivity(intent);
+        }else if(view.getId() == R.id.Reset) {
+            counterValInt = 0;
+            counterValue.setText("Total:    " + String.valueOf(counterValInt));
+            currentLength.setText("NONE");
+            currentLength.setTextColor(Color.parseColor("#028A0F"));
+
         }
     }
 
