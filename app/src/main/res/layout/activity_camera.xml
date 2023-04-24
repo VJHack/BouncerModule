@@ -41,6 +41,12 @@
             android:scaleType="centerInside"
             android:id="@+id/image2View">
         </ImageView>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/confidenceText">
+
+        </TextView>
 
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

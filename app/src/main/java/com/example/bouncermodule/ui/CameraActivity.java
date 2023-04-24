@@ -18,6 +18,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Rect;
 import android.media.Image;
 import android.os.Bundle;
+import android.os.StrictMode;
 import android.util.Base64;
 import android.util.Log;
 import android.util.Size;
@@ -29,13 +30,23 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.services.rekognition.AmazonRekognition;
+import com.amazonaws.services.rekognition.AmazonRekognitionClient;
+import com.amazonaws.services.rekognition.model.CompareFacesMatch;
+import com.amazonaws.services.rekognition.model.CompareFacesRequest;
+import com.amazonaws.services.rekognition.model.CompareFacesResult;
+import com.amazonaws.services.rekognition.model.ComparedFace;
+import com.android.volley.AuthFailureError;
 import com.android.volley.DefaultRetryPolicy;
 import com.android.volley.NetworkResponse;
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
 import com.android.volley.toolbox.HttpHeaderParser;
+import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.example.bouncermodule.R;
@@ -234,7 +245,8 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
                                         outputImage2.compress(Bitmap.CompressFormat.PNG, 100, out2);
                                         bytes2 = out2.toByteArray();
                                         // For facial comparison -----
-                                        faceComparison();
+                                        compareFaces();
+                                        //faceComparison();
                                         //Log.i("FACE COMPARISON RESULT", faceComparisonConfidence.toString());
                                     }
                                 })
@@ -247,13 +259,92 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
                                 });
     }
 
-    private void faceComparison() {
+    public void compareFaces() {
+       /* TODO: GET RID OF THIS EVENTUALLY, MOVE INTO ASYNC TASK */
+
+        StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
+
+        StrictMode.setThreadPolicy(policy);
+        Float similarityThreshold = 70F;
+
+        ByteBuffer sourceImageBytes = null;
+        ByteBuffer targetImageBytes = null;
+
+        AmazonRekognition rekognitionClient = new AmazonRekognitionClient(new BasicAWSCredentials("AKIA22X4AXTTUCNPAKHM", "VP0xId7YoTArqnp4Xk6s4WS+kA4mAgaV2dwN5YcP"));
+
+        com.amazonaws.services.rekognition.model.Image source = new com.amazonaws.services.rekognition.model.Image().withBytes(ByteBuffer.wrap(bytes1));
+        com.amazonaws.services.rekognition.model.Image target = new com.amazonaws.services.rekognition.model.Image().withBytes(ByteBuffer.wrap(bytes2));
+
+        CompareFacesRequest request = new CompareFacesRequest()
+                .withSourceImage(source)
+                .withTargetImage(target)
+                .withSimilarityThreshold(similarityThreshold);
+        // Call operation
+        CompareFacesResult compareFacesResult = rekognitionClient.compareFaces(request);
+
+        // Display results
+        List <CompareFacesMatch> faceDetails = compareFacesResult.getFaceMatches();
+        for (CompareFacesMatch match: faceDetails){
+            ComparedFace face= match.getFace();
+            Log.i("AWS FACE COMPARE CONFIDENCE", face.getConfidence().toString());
+            TextView tv = findViewById(R.id.confidenceText);
+            tv.setText(face.getConfidence().toString());
+        }
+    }
+
+    /*
+    public static void compareTwoFaces(RekognitionClient rekClient, Float similarityThreshold, String sourceImage, String targetImage) {
+        try {
+            InputStream sourceStream = new FileInputStream(sourceImage);
+            InputStream tarStream = new FileInputStream(targetImage);
+            SdkBytes sourceBytes = SdkBytes.fromInputStream(sourceStream);
+            SdkBytes targetBytes = SdkBytes.fromInputStream(tarStream);
+
+            // Create an Image object for the source image.
+            Image souImage = Image.builder()
+                    .bytes(sourceBytes)
+                    .build();
+
+            Image tarImage = Image.builder()
+                    .bytes(targetBytes)
+                    .build();
+
+            CompareFacesRequest facesRequest = CompareFacesRequest.builder()
+                    .sourceImage(souImage)
+                    .targetImage(tarImage)
+                    .similarityThreshold(similarityThreshold)
+                    .build();
+
+            // Compare the two images.
+            CompareFacesResponse compareFacesResult = rekClient.compareFaces(facesRequest);
+            List<CompareFacesMatch> faceDetails = compareFacesResult.faceMatches();
+            for (CompareFacesMatch match: faceDetails){
+                ComparedFace face= match.face();
+                BoundingBox position = face.boundingBox();
+                System.out.println("Face at " + position.left().toString()
+                        + " " + position.top()
+                        + " matches with " + face.confidence().toString()
+                        + "% confidence.");
+
+            }
+            List<ComparedFace> uncompared = compareFacesResult.unmatchedFaces();
+            System.out.println("There was " + uncompared.size() + " face(s) that did not match");
+            System.out.println("Source image rotation: " + compareFacesResult.sourceImageOrientationCorrection());
+            System.out.println("target image rotation: " + compareFacesResult.targetImageOrientationCorrection());
+
+        } catch(RekognitionException | FileNotFoundException e) {
+            System.out.println("Failed to load source image " + sourceImage);
+            System.exit(1);
+        }
+    }*/
+
+    private void faceComparisonOld() {
         // url to post our data
         String url = "https://faceapi.mxface.ai/api/v3/face/verify";
 
         // creating a new variable for our request queue
         RequestQueue queue = Volley.newRequestQueue(CameraActivity.this);
-        StringRequest request = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+        /*StringRequest request = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
                 // on below line we are displaying a success toast message.
@@ -299,13 +390,52 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
                 params.put("Subscriptionkey", "YIHCIvHyTG1YvOkmnw-4wmA4nIfC31477");
                 return params;
             }
-        };
+        };*/
         // below line is to make
         // a json object request.
-        request.setRetryPolicy(new DefaultRetryPolicy(
+        JSONObject params = new JSONObject();
+        try {
+            String en1 = Base64.encodeToString(bytes1, Base64.DEFAULT);
+            String en2 = Base64.encodeToString(bytes2, Base64.DEFAULT);
+            params.put("encoded_image1", en1);
+            params.put("encoded_image1", en2);
+        }
+        catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        JsonObjectRequest jsonObjReq = new JsonObjectRequest(Request.Method.POST,
+                url, params,
+                new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.d("TAG", response.toString());
+                    }
+                }, new Response.ErrorListener() {
+
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                VolleyLog.d("TAG", "Error: " + error.getMessage());
+            }
+        }) {
+
+            /**
+             * Passing some request headers
+             * */
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<String, String>();
+                headers.put("Content-Type", "application/json; charset=utf-8");
+                headers.put("Subscriptionkey", "YIHCIvHyTG1YvOkmnw-4wmA4nIfC31477");
+                return headers;
+            }
+
+        };
+        jsonObjReq.setRetryPolicy(new DefaultRetryPolicy(
                 0,
-                -1,
+                0,
                 DefaultRetryPolicy.DEFAULT_BACKOFF_MULT));
-        queue.add(request);
+        queue.add(jsonObjReq);
     }
 }
