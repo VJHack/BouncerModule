@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "598021706458",
+    "firebase_url": "https://hops-e3bed-default-rtdb.firebaseio.com",
+    "project_id": "hops-e3bed",
+    "storage_bucket": "hops-e3bed.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:598021706458:android:27bd9913c37a407e4e8be3",
+        "android_client_info": {
+          "package_name": "com.example.bouncermodule"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "598021706458-g4ahe777c81h46efqqnd12052pgoaisf.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDysZzd6M_ya0YsXN74wkq1wEfHgs9gsUM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "598021706458-g4ahe777c81h46efqqnd12052pgoaisf.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
