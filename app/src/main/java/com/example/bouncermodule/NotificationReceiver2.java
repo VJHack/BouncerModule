@@ -3,10 +3,14 @@ package com.example.bouncermodule;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
 import com.example.bouncermodule.ui.authentication.AuthenticationFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -31,7 +35,6 @@ public class NotificationReceiver2 extends BroadcastReceiver {
         String currentUser = AuthenticationFragment.getEmail().replaceAll("[.]", "_");
         mDatabase.child("userFeedback").child("Chasers 2_0").child(currentUser).child("lineLength").setValue("Medium");
         mDatabase.child("userFeedback").child("Chasers 2_0").child(currentUser).child("time").setValue(System.currentTimeMillis());
-
 
         DatabaseReference myRef = mDatabase.child("userFeedback").child("Chasers 2_0");
         myRef.addListenerForSingleValueEvent(
