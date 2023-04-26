@@ -161,7 +161,6 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
             counterValue.setText("Total:    " + String.valueOf(counterValInt));
         }
 
-        // Changing the line count and line length of Mondays
         if (Verified) {
             Bars tempBar = barsMap.get(associatedBar);
             tempBar.setLineCount(counterValInt);
