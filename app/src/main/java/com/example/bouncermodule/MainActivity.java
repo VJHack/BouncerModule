@@ -1,37 +1,37 @@
 package com.example.bouncermodule;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.location.Location;
-import android.location.LocationListener;
 import android.location.LocationManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.os.Handler;
+import android.os.Looper;
 import android.provider.MediaStore;
-import android.text.Spannable;
-import android.text.SpannableString;
-import android.text.style.ForegroundColorSpan;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.google.android.gms.location.FusedLocationProviderClient;
+import com.google.android.gms.location.LocationCallback;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationResult;
+import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
-import androidx.core.app.NotificationCompat;
 import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
@@ -50,9 +50,10 @@ import java.util.Map;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
-    private static final long START_HANDLER_DELAY = 10;
+    private static final String REQUESTING_LOCATION_UPDATES_KEY = "true";
     private ActivityMainBinding binding;
     private TextView counterValue;
+
     private TextView currentLength;
     private Button noneButton;
     private Button shortButton;
@@ -68,8 +69,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private ImageView photoIdImageView;
     private Button photoIdButton;
 
-    private NotificationManager mNotifyManager;
+    public boolean requestingLocationUpdates =  true;
 
+    FusedLocationProviderClient mFusedLocationClient;
+
+    int PERMISSION_ID = 44;
+
+    LocationRequest locationRequest;
+
+
+    private static final long UPDATE_INTERVAL_IN_MILLISECONDS = 3000;
+
+    public LocationCallback locationCallback;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,7 +89,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         BottomNavigationView navView = findViewById(R.id.nav_view);
-        sendNotification(navView);
+//        noneButton = (Button) findViewById(R.id.None);
+//        noneButton.setOnClickListener(this);
+//        shortButton = (Button) findViewById(R.id.Short);
+//        shortButton.setOnClickListener(this);
+//        mediumButton = (Button) findViewById(R.id.Medium);
+//        mediumButton.setOnClickListener(this);
+//        longButton = (Button) findViewById(R.id.Long);
+//        longButton.setOnClickListener(this);
+//
+//        currentLength = (TextView) findViewById(R.id.CurrentLengthValue);
+//        counterValue = (TextView) findViewById(R.id.Total_Value);
+//        plusButton = (Button) findViewById(R.id.plus);
+//        plusButton.setOnClickListener(this);
+//        minusButton = (Button) findViewById(R.id.minus);
+//        minusButton.setOnClickListener(this);
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+
+        getLastLocation();
+        //Request for camera runtime permission
+//        if (ContextCompat.checkSelfPermission( MainActivity.this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+//            ActivityCompat.requestPermissions(MainActivity.this, new String[]{
+//                    Manifest.permission.CAMERA
+//            },100);
+//        }
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
@@ -89,6 +123,176 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         NavigationUI.setupWithNavController(binding.navView, navController);
 
 
+        locationCallback = new LocationCallback() {
+            @Override
+            public void onLocationResult(LocationResult locationResult) {
+                if (locationResult == null) {
+                    return;
+                }
+                for (Location location : locationResult.getLocations()) {
+                    // Update UI with location data
+                    // ...
+                }
+            }
+        };
+        updateValuesFromBundle(savedInstanceState);
+        startLocationUpdates();
+        startLocationUpdates();
+
+    }
+
+    private void updateValuesFromBundle(Bundle savedInstanceState) {
+        System.out.println("aaaaaaaa");
+        if (savedInstanceState == null) {
+            return;
+        }
+
+        // Update the value of requestingLocationUpdates from the Bundle.
+        if (savedInstanceState.keySet().contains(REQUESTING_LOCATION_UPDATES_KEY)) {
+            requestingLocationUpdates = savedInstanceState.getBoolean(
+                    REQUESTING_LOCATION_UPDATES_KEY);
+        }
+
+        // ...
+
+        // Update UI to match restored state
+
+    }
+
+
+    @SuppressLint("MissingPermission")
+    private void getLastLocation() {
+        // check if permissions are given
+        if (checkPermissions()) {
+
+            // check if location is enabled
+            if (isLocationEnabled()) {
+
+                // getting last
+                // location from
+                // FusedLocationClient
+                // object
+                mFusedLocationClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
+                    @Override
+                    public void onComplete(@NonNull Task<Location> task) {
+                        Location location = task.getResult();
+                        if (location == null) {
+                            requestNewLocationData();
+                        } else {
+//                            latitudeTextView.setText(location.getLatitude() + "");
+//                            longitTextView.setText(location.getLongitude() + "");
+                        }
+                    }
+                });
+            } else {
+                Toast.makeText(this, "Please turn on" + " your location...", Toast.LENGTH_LONG).show();
+                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                startActivity(intent);
+            }
+        } else {
+            // if permissions aren't available,
+            // request for permissions
+            requestPermissions();
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private void requestNewLocationData() {
+
+        // Initializing LocationRequest
+        // object with appropriate methods
+        LocationRequest mLocationRequest = new LocationRequest();
+        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+        mLocationRequest.setInterval(5);
+        mLocationRequest.setFastestInterval(0);
+        mLocationRequest.setNumUpdates(1);
+
+        // setting LocationRequest
+
+        // on FusedLocationClient
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        mFusedLocationClient.requestLocationUpdates(mLocationRequest, locationCallback, Looper.myLooper());
+    }
+
+
+
+    // method to check for permissions
+    private boolean checkPermissions() {
+        return ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+
+        // If we want background location
+        // on Android 10.0 and higher,
+        // use:
+        // ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
+    }
+
+    protected void onPause() {
+        super.onPause();
+        stopLocationUpdates();
+    }
+
+    private void stopLocationUpdates() {
+        mFusedLocationClient.removeLocationUpdates(locationCallback);
+    }
+
+    // method to request for permissions
+    private void requestPermissions() {
+        ActivityCompat.requestPermissions(this, new String[]{
+                android.Manifest.permission.ACCESS_COARSE_LOCATION,
+                android.Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_ID);
+    }
+
+    // method to check
+    // if location is enabled
+    private boolean isLocationEnabled() {
+        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+    }
+
+    // If everything is alright then
+    @Override
+    public void
+    onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == PERMISSION_ID) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getLastLocation();
+            }
+        }
+    }
+
+    protected void onResume() {
+        super.onResume();
+        if (requestingLocationUpdates) {
+            startLocationUpdates();
+        }
+    }
+
+    private void startLocationUpdates() {
+        System.out.println("fewrfwefwef");
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // TODO: Consider calling
+            //    ActivityCompat#requestPermissions
+            // here to request the missing permissions, and then overriding
+            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+            //                                          int[] grantResults)
+            // to handle the case where the user grants the permission. See the documentation
+            // for ActivityCompat#requestPermissions for more details.
+            return;
+        }
+        mFusedLocationClient.requestLocationUpdates(locationRequest,
+                locationCallback,
+                Looper.getMainLooper());
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        boolean requestingLocationUpdates = true;
+        outState.putBoolean(String.valueOf(true),
+                requestingLocationUpdates);
+        // ...
+        super.onSaveInstanceState(outState);
     }
 
     // used for reading in file filled with new bars
@@ -100,63 +304,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //            mDatabase.child("bars").child(barId).setValue(bar);
 //        }
 //    }
-
-
-    // This ID can be the value you want.
-    private static final int NOTIFICATION_ID = 0;
-
-    // This ID can be the value you want.
-    private static final String NOTIFICATION_ID_STRING = "My Notifications";
-
-    public void sendNotification(View view) {
-
-        mNotifyManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-
-        //Create the channel. Android will automatically check if the channel already exists
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            NotificationChannel channel = new NotificationChannel(NOTIFICATION_ID_STRING, "My Channel Name", NotificationManager.IMPORTANCE_DEFAULT);
-            channel.setDescription("My notification channel description");
-            mNotifyManager.createNotificationChannel(channel);
-        }
-
-        //Intent for slow button
-        Intent broadcastIntent1 = new Intent(this, NotificationReceiver1.class);
-        broadcastIntent1.putExtra("toastMessage1", "message");
-        PendingIntent actionIntent1 = PendingIntent.getBroadcast(this, 0, broadcastIntent1, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
-        //Intent for medium button
-        Intent broadcastIntent2 = new Intent(this, NotificationReceiver2.class);
-        broadcastIntent2.putExtra("toastMessage1", "message");
-        PendingIntent actionIntent2 = PendingIntent.getBroadcast(this, 0, broadcastIntent2, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
-        //Intent for long button
-        Intent broadcastIntent3 = new Intent(this, NotificationReceiver3.class);
-        broadcastIntent3.putExtra("toastMessage1", "message");
-        PendingIntent actionIntent3 = PendingIntent.getBroadcast(this, 0, broadcastIntent3, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-
-        //Setting the Color of each Notification button
-        Spannable spannableShort = new SpannableString("Short");
-        spannableShort.setSpan(new ForegroundColorSpan(Color.rgb(0,128,0)), 0, spannableShort.length(), 0);
-        Spannable spannableMed = new SpannableString("Medium");
-        spannableMed.setSpan(new ForegroundColorSpan(Color.BLUE), 0, spannableMed.length(), 0);
-        Spannable spannableLong = new SpannableString("Long");
-        spannableLong.setSpan(new ForegroundColorSpan(Color.RED), 0, spannableLong.length(), 0);
-
-        NotificationCompat.Builder notifyBuilder
-                = new NotificationCompat.Builder(this, NOTIFICATION_ID_STRING)
-                .setContentTitle("You're near a bar!")
-                .setContentText("How long is the line at Chasers 2.0?")
-                .setSmallIcon(R.drawable.ic_dashboard_black_24dp)
-                .addAction(R.drawable.ic_home_black_24dp,  spannableShort, actionIntent1)
-                .addAction(R.drawable.ic_home_black_24dp, spannableMed, actionIntent2)
-                .addAction(R.drawable.ic_home_black_24dp, spannableLong, actionIntent3)
-                ;
-        ;
-
-
-        Notification myNotification = notifyBuilder.build();
-        mNotifyManager.notify(NOTIFICATION_ID, myNotification);
-    }
 
     @Override
     public void onClick(View view) {

@@ -84,7 +84,15 @@ public class BarsFragment extends Fragment  {
 
         });
 
-////        BarsFragment.getMapAsync(this);
+//        final TextView textView = binding.textBars;
+//        barsViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+//        barsViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
+
+        SupportMapFragment BarsFragment = (SupportMapFragment) getParentFragmentManager()
+                .findFragmentById(R.id.map);
+        System.out.println("Barrrrrrrrrrrrr  " + BarsFragment);
+        //// BarsFragment.getMapAsync(this);
+
 
 
         return contentView;
