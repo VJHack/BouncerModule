@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <uses-feature android:name="android.hardware.camera.any" />
 
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
@@ -16,10 +20,21 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.BouncerModule"
         tools:targetApi="31">
+        <activity
+            android:name=".ui.CameraActivity"
+            android:exported="false">
+        </activity>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="${MAPS_API_KEY}" />
+
+        <meta-data
+            android:name="AWS_ACCESS_KEY"
+            android:value="${AWS_ACCESS_KEY}" />
+        <meta-data
+            android:name="AWS_SECRET_KEY"
+            android:value="${AWS_SECRET_KEY}" />
 
         <activity
             android:name=".MainActivity"
@@ -30,8 +45,8 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
 
+        </activity>
     </application>
 
 </manifest>

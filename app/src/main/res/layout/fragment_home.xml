@@ -115,6 +115,14 @@
             android:layout_height="wrap_content"
             android:text="-"
             android:gravity="center"/>
+
+        <Button
+            android:id="@+id/cameraButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Check ID"
+            android:gravity="center" />
     </LinearLayout>
+
 
 </androidx.constraintlayout.widget.ConstraintLayout>
