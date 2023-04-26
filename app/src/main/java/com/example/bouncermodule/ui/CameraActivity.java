@@ -197,7 +197,6 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        Float similarityThreshold = 70F;
         // must be wrapped in try/catch in case we can't find keys from local properties
         try {
             ApplicationInfo applicationInfo = getApplicationContext().getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
@@ -208,6 +207,8 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
 
             Image source = new Image().withBytes(ByteBuffer.wrap(bytes1));
             Image target = new Image().withBytes(ByteBuffer.wrap(bytes2));
+            // Only count a "match" with 50% similarity or above (and still show similarity % if match)
+            Float similarityThreshold = 50F;
 
             CompareFacesRequest request = new CompareFacesRequest()
                     .withSourceImage(source)
@@ -216,12 +217,19 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
             // Call operation
             CompareFacesResult compareFacesResult = rekognitionClient.compareFaces(request);
             // Display results
-            List <CompareFacesMatch> faceDetails = compareFacesResult.getFaceMatches();
-            for (CompareFacesMatch match: faceDetails){
-                ComparedFace face= match.getFace();
-                Log.i("AWS FACE COMPARE CONFIDENCE", face.getConfidence().toString());
-                TextView tv = findViewById(R.id.confidenceText);
-                tv.setText(face.getConfidence().toString());
+            List <CompareFacesMatch> faceMatches = compareFacesResult.getFaceMatches();
+            //List <ComparedFace> faceUnmatches = compareFacesResult.getUnmatchedFaces();
+            TextView tv = findViewById(R.id.confidenceText);
+            if(faceMatches.size()==0){
+                tv.setText("No Match");
+            }
+            else {
+                for (CompareFacesMatch match : faceMatches) {
+                    ComparedFace face = match.getFace();
+                    String similarity = match.getSimilarity().toString() + "% Match";
+                    Log.i("AWS FACE COMPARE CONFIDENCE", similarity);
+                    tv.setText(similarity);
+                }
             }
         }
         catch (PackageManager.NameNotFoundException e){
