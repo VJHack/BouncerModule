@@ -7,7 +7,6 @@ plugins {
 android {
     namespace 'com.example.bouncermodule'
     compileSdk 33
-
     defaultConfig {
         applicationId "com.example.bouncermodule"
         minSdk 28
