@@ -7,6 +7,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".ui.dashboard.DashboardFragment" >
+
 <!--    <TextView-->
 <!--        android:id="@+id/text_bars"-->
 <!--        android:layout_width="match_parent"-->

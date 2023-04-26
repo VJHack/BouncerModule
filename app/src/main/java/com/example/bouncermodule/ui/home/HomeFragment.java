@@ -1,6 +1,14 @@
 package com.example.bouncermodule.ui.home;
 
+import static android.content.Context.CAMERA_SERVICE;
+
+import android.app.Activity;
+import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -11,14 +19,28 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+import com.example.bouncermodule.Bars;
 import com.example.bouncermodule.MainActivity;
+//import com.example.bouncermodule.Manifest;
 import com.example.bouncermodule.R;
 import com.example.bouncermodule.databinding.ActivityMainBinding;
 import com.example.bouncermodule.databinding.FragmentHomeBinding;
+import com.example.bouncermodule.ui.CameraActivity;
 import com.example.bouncermodule.ui.authentication.AuthenticationFragment;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+import com.google.mlkit.vision.face.FaceDetectorOptions;
+
+import android.Manifest;
+import java.util.HashMap;
+import java.util.Map;
 
 public class HomeFragment extends Fragment  implements View.OnClickListener {
     private TextView counterValue;
@@ -32,6 +54,8 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
     private Button minusButton;
     private Button signOutButton;
     private Button resetButton;
+    private DatabaseReference mDatabase;
+    private Map<String, Bars> barsMap = new HashMap<>();
     private int counterValInt = 0;
 
     private ImageView photoIdImageView;
@@ -189,33 +213,6 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
-    }
-
-    /**
-     * Get the angle by which an image must be rotated given the device's current
-     * orientation. Used for facial detection.
-     */
-    // @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
-    private int getRotationCompensation(String cameraId, Activity activity, boolean isFrontFacing)
-            throws CameraAccessException {
-        // Get the device's current rotation relative to its "native" orientation.
-        // Then, from the ORIENTATIONS table, look up the angle the image must be
-        // rotated to compensate for the device's rotation.
-        int deviceRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
-        int rotationCompensation = ORIENTATIONS.get(deviceRotation);
-
-        // Get the device's sensor orientation.
-        CameraManager cameraManager = (CameraManager) activity.getSystemService(CAMERA_SERVICE);
-        int sensorOrientation = cameraManager
-                .getCameraCharacteristics(cameraId)
-                .get(CameraCharacteristics.SENSOR_ORIENTATION);
-
-        if (isFrontFacing) {
-            rotationCompensation = (sensorOrientation + rotationCompensation) % 360;
-        } else { // back-facing
-            rotationCompensation = (sensorOrientation - rotationCompensation + 360) % 360;
-        }
-        return rotationCompensation;
     }
 
 }
