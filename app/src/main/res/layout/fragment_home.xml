@@ -21,10 +21,10 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:orientation="vertical"
         android:gravity="center"
         android:orientation="vertical"
         tools:layout_editor_absoluteX="16dp"
@@ -80,11 +80,11 @@
             android:id="@+id/CurrentLength"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
             android:text="Current Line Length:"
+            android:gravity="center"
+            android:textStyle="bold"
             android:textSize="25dp"
-            android:textStyle="bold" />
-
+            />
         <TextView
             android:id="@+id/CurrentLengthValue"
             android:layout_width="wrap_content"
@@ -100,10 +100,11 @@
             android:id="@+id/Counter"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:gravity="center"
             android:text="Counter:"
+            android:textStyle="bold"
             android:textSize="32dp"
-            android:textStyle="bold" />
+            android:gravity="center"
+            />
 
         <Button
             android:id="@+id/plus"
@@ -154,7 +155,12 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintVertical_bias="0.746" />
 
-
+        <Button
+            android:id="@+id/cameraButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Check ID"
+            android:gravity="center" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
