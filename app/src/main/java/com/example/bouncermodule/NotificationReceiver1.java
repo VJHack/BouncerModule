@@ -7,6 +7,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 
+import com.example.bouncermodule.ui.authentication.AuthenticationFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -31,10 +32,9 @@ public class NotificationReceiver1 extends BroadcastReceiver {
 
         mDatabase = FirebaseDatabase.getInstance().getReference();
 
-        String tempName = "Tempuser" + String.valueOf(ThreadLocalRandom.current().nextInt(0, 5 + 1));
-        mDatabase.child("userFeedback").child("Chasers 2_0").child(tempName).child("lineLength").setValue("Short");
-        mDatabase.child("userFeedback").child("Chasers 2_0").child(tempName).child("time").setValue(System.currentTimeMillis());
-
+        String currentUser = AuthenticationFragment.getEmail().replaceAll("[.]", "_");
+        mDatabase.child("userFeedback").child("Chasers 2_0").child(currentUser).child("lineLength").setValue("Short");
+        mDatabase.child("userFeedback").child("Chasers 2_0").child(currentUser).child("time").setValue(System.currentTimeMillis());
 
         DatabaseReference myRef = mDatabase.child("userFeedback").child("Chasers 2_0");
         myRef.addListenerForSingleValueEvent(
