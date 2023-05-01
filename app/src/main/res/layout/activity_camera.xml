@@ -5,7 +5,6 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".ui.CameraActivity">
-
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -44,9 +43,14 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:id="@+id/confidenceText">
-
+            android:id="@+id/confidenceText"
+            android:textSize="24dp">
         </TextView>
-
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/birthdayText"
+            android:textSize="24dp">
+        </TextView>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

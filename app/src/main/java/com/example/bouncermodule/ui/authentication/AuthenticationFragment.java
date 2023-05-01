@@ -36,7 +36,7 @@ public class AuthenticationFragment extends AppCompatActivity {
     //private EditText email;
     //private EditText password;
     private static final String TAG = "Authentication";
-    private FirebaseAuth mAuth;
+    private static FirebaseAuth mAuth;
     //private FragmentAuthenticationBinding mBinding;
     private Button login;
     private EditText email;
@@ -231,12 +231,16 @@ public class AuthenticationFragment extends AppCompatActivity {
         return valid;
     }
 
+    public static void signOut() {
+        mAuth.getInstance().signOut();
+    }
+
 
     private void updateUI(FirebaseUser user) {
         if (user != null) {
             Intent intent = new Intent(AuthenticationFragment.this, MainActivity.class);
             startActivity(intent);
-            FirebaseAuth.getInstance().signOut();
+            //FirebaseAuth.getInstance().signOut();
 
         } else {
             //stay on page

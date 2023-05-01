@@ -43,6 +43,11 @@ import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
+import com.google.mlkit.vision.text.Text;
+import com.google.mlkit.vision.text.TextRecognition;
+import com.google.mlkit.vision.text.TextRecognizer;
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
+
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -101,6 +106,7 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
                 takePhotoButton.setVisibility(View.INVISIBLE);
                 previewView.setVisibility(View.INVISIBLE);
                 checkFaces();
+                detectText();
             }
         });
     }
@@ -197,7 +203,6 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
         StrictMode.ThreadPolicy policy = new StrictMode.ThreadPolicy.Builder().permitAll().build();
         StrictMode.setThreadPolicy(policy);
 
-        Float similarityThreshold = 70F;
         // must be wrapped in try/catch in case we can't find keys from local properties
         try {
             ApplicationInfo applicationInfo = getApplicationContext().getPackageManager().getApplicationInfo(getPackageName(), PackageManager.GET_META_DATA);
@@ -208,6 +213,8 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
 
             Image source = new Image().withBytes(ByteBuffer.wrap(bytes1));
             Image target = new Image().withBytes(ByteBuffer.wrap(bytes2));
+            // Only count a "match" with 50% similarity or above (and still show similarity % if match)
+            Float similarityThreshold = 50F;
 
             CompareFacesRequest request = new CompareFacesRequest()
                     .withSourceImage(source)
@@ -216,16 +223,63 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
             // Call operation
             CompareFacesResult compareFacesResult = rekognitionClient.compareFaces(request);
             // Display results
-            List <CompareFacesMatch> faceDetails = compareFacesResult.getFaceMatches();
-            for (CompareFacesMatch match: faceDetails){
-                ComparedFace face= match.getFace();
-                Log.i("AWS FACE COMPARE CONFIDENCE", face.getConfidence().toString());
-                TextView tv = findViewById(R.id.confidenceText);
-                tv.setText(face.getConfidence().toString());
+            List <CompareFacesMatch> faceMatches = compareFacesResult.getFaceMatches();
+            //List <ComparedFace> faceUnmatches = compareFacesResult.getUnmatchedFaces();
+            TextView tv = findViewById(R.id.confidenceText);
+            if(faceMatches.size()==0){
+                tv.setText("No Match");
+            }
+            else {
+                for (CompareFacesMatch match : faceMatches) {
+                    ComparedFace face = match.getFace();
+                    String similarity = match.getSimilarity().toString() + "% Match";
+                    Log.i("AWS FACE COMPARE CONFIDENCE", similarity);
+                    tv.setText(similarity);
+                }
             }
         }
         catch (PackageManager.NameNotFoundException e){
             Log.e("FAILED GETTING METADATA AWS KEYS FROM LOCAL PROPERTIES", e.getMessage());
         }
+        catch (com.amazonaws.AmazonServiceException e){
+            Log.e("AMAZON REKOGNITION KEY BROKEN", e.getMessage());
+        }
+    }
+
+    public void detectText(){
+        TextRecognizer recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
+        Task<Text> result =
+                recognizer.process(inputImage2)
+                        .addOnSuccessListener(new OnSuccessListener<Text>() {
+                            @Override
+                            public void onSuccess(Text visionText) {
+                                // Task completed successfully
+                                String txt = visionText.getText();
+                                int index;
+                                if(txt.toUpperCase().contains("D0B"))
+                                    index = txt.toUpperCase().indexOf("D0B");
+                                else
+                                    index = txt.toUpperCase().indexOf("DOB");
+                                TextView tv = findViewById(R.id.birthdayText);
+                                if(index!=-1 && txt.toLowerCase().contains("4a")){
+                                    String bday = txt.substring(index+3, txt.toLowerCase().indexOf("4a"));
+                                    tv.setText("Birthday: " + bday.replace('I', '/'));
+                                    Log.i("TEXT DETECTION", txt);
+                                }
+                                else{
+                                    tv.setText("Birthday: Unable to obtain");
+                                }
+                                //Log.i("TEXT DETECTION", visionText.getText());
+                                // ...
+                            }
+                        })
+                        .addOnFailureListener(
+                                new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        // Task failed with an exception
+                                        // ...
+                                    }
+                                });
     }
 }

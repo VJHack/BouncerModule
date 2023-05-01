@@ -34,19 +34,22 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.bouncermodule.R;
 import com.example.bouncermodule.databinding.FragmentHomeBinding;
 import com.example.bouncermodule.ui.CameraActivity;
-import com.example.bouncermodule.ui.authentication.AuthenticationFragment;
 import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
 import com.example.bouncermodule.Bars;
 import com.example.bouncermodule.R;
 import com.example.bouncermodule.databinding.ActivityMainBinding;
 import com.example.bouncermodule.databinding.FragmentHomeBinding;
+import com.example.bouncermodule.ui.CameraActivity;
+import com.example.bouncermodule.ui.authentication.AuthenticationFragment;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.google.mlkit.vision.face.FaceDetectorOptions;
 
+import android.Manifest;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -60,7 +63,11 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
 
     private Button plusButton;
     private Button minusButton;
-    private int counterValInt;
+    private Button signOutButton;
+    private Button resetButton;
+    private DatabaseReference mDatabase;
+    private Map<String, Bars> barsMap = new HashMap<>();
+    private int counterValInt = 0;
 
     private ImageView photoIdImageView;
     private Button photoIdButton;
@@ -98,6 +105,10 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
         mediumButton.setOnClickListener((View.OnClickListener) this);
         longButton = (Button) myView.findViewById(R.id.Long);
         longButton.setOnClickListener((View.OnClickListener) this);
+        signOutButton = (Button) myView.findViewById(R.id.signOut);
+        signOutButton.setOnClickListener((View.OnClickListener) this);
+        resetButton = (Button) myView.findViewById(R.id.Reset);
+        resetButton.setOnClickListener((View.OnClickListener) this);
 
         currentLength = (TextView) myView.findViewById(R.id.CurrentLengthValue);
         counterValue = (TextView) myView.findViewById(R.id.Total_Value);
@@ -135,6 +146,7 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
 
         Verified = true;
         mDatabase = FirebaseDatabase.getInstance().getReference();
+
         DatabaseReference barRef = mDatabase.child("bars/");
         barRef.addValueEventListener(new ValueEventListener(){
             @Override
@@ -183,8 +195,8 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
             public void onCancelled(@NonNull DatabaseError error) {
 
             }
-        });
 
+        });
         return myView;
     }
 
