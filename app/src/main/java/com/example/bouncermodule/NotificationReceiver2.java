@@ -8,6 +8,6 @@ public class NotificationReceiver2 extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        System.out.println("Medium Action performed");
+        System.out.println("Medium Action performed"+ intent.getStringExtra("barName"));
     }
 }

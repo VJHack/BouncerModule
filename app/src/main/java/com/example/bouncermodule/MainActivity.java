@@ -27,6 +27,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.bouncermodule.ui.bars.BarsFragment;
 import com.google.android.gms.location.FusedLocationProviderClient;
 import com.google.android.gms.location.LocationCallback;
 import com.google.android.gms.location.LocationRequest;
@@ -54,8 +55,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
@@ -91,6 +95,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public LocationCallback locationCallback;
 
+
+    //Current Location
+    //TODO: Replace these values with realtime values
+    private double lat = 43.0686899;
+    private double lon = -89.3876907;
+
+    private DatabaseReference mDatabase;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -98,10 +110,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
         BottomNavigationView navView = findViewById(R.id.nav_view);
-        sendNotification(navView);
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
 
-        getLastLocation();
+        checkLocation(navView);
+        DatabaseReference barRef = mDatabase.child("bars/");
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         AppBarConfiguration appBarConfiguration = new AppBarConfiguration.Builder(
@@ -127,7 +138,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         updateValuesFromBundle(savedInstanceState);
 
         startLocationUpdates();
-        startLocationUpdates();
+
 
     }
 
@@ -169,6 +180,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         if (location == null) {
                             requestNewLocationData();
                         } else {
+                            System.out.println(location.getLatitude());
+                            System.out.println(location.getLongitude());
+                            location=null;
 //                            latitudeTextView.setText(location.getLatitude() + "");
 //                            longitTextView.setText(location.getLongitude() + "");
                         }
@@ -297,14 +311,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
     // This ID can be the value you want.
-    private static final int NOTIFICATION_ID = 0;
 
     // This ID can be the value you want.
     private static final String NOTIFICATION_ID_STRING = "My Notifications";
 
-    public void sendNotification(View view) {
-
+    public void sendNotification(View view, String barName) {
+        int NOTIFICATION_ID = (int)Math.round(Math.random()*100);
+        System.out.println("NOTIFICATION_ID"+NOTIFICATION_ID);
         mNotifyManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        Random randInt = new Random();
 
         //Create the channel. Android will automatically check if the channel already exists
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -315,18 +330,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         //Intent for slow button
         Intent broadcastIntent1 = new Intent(this, NotificationReceiver1.class);
-        broadcastIntent1.putExtra("toastMessage1", "message");
-        PendingIntent actionIntent1 = PendingIntent.getBroadcast(this, 0, broadcastIntent1, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        broadcastIntent1.putExtra("barName", barName);
+        broadcastIntent1.putExtra("notifId", NOTIFICATION_ID);
+        PendingIntent actionIntent1 = PendingIntent.getBroadcast(this, randInt.ints(1, 101).findAny().getAsInt(), broadcastIntent1, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         //Intent for medium button
         Intent broadcastIntent2 = new Intent(this, NotificationReceiver2.class);
-        broadcastIntent2.putExtra("toastMessage1", "message");
-        PendingIntent actionIntent2 = PendingIntent.getBroadcast(this, 0, broadcastIntent2, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        broadcastIntent2.putExtra("barName", barName);
+        broadcastIntent2.putExtra("notifId", NOTIFICATION_ID);
+        PendingIntent actionIntent2 = PendingIntent.getBroadcast(this, randInt.ints(1, 101).findAny().getAsInt(), broadcastIntent2, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         //Intent for long button
         Intent broadcastIntent3 = new Intent(this, NotificationReceiver3.class);
-        broadcastIntent3.putExtra("toastMessage1", "message");
-        PendingIntent actionIntent3 = PendingIntent.getBroadcast(this, 0, broadcastIntent3, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        broadcastIntent3.putExtra("barName", barName);
+        broadcastIntent3.putExtra("notifId", NOTIFICATION_ID);
+        PendingIntent actionIntent3 = PendingIntent.getBroadcast(this, randInt.ints(1, 101).findAny().getAsInt(), broadcastIntent3, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         //Setting the Color of each Notification button
         Spannable spannableShort = new SpannableString("Short");
@@ -339,7 +357,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         NotificationCompat.Builder notifyBuilder
                 = new NotificationCompat.Builder(this, NOTIFICATION_ID_STRING)
                 .setContentTitle("You're near a bar!")
-                .setContentText("How long is the line at Chasers 2.0?")
+                .setContentText("How long is the line at "+barName+"?")
                 .setSmallIcon(R.drawable.ic_dashboard_black_24dp)
                 .addAction(R.drawable.ic_home_black_24dp,  spannableShort, actionIntent1)
                 .addAction(R.drawable.ic_home_black_24dp, spannableMed, actionIntent2)
@@ -349,6 +367,51 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         Notification myNotification = notifyBuilder.build();
         mNotifyManager.notify(NOTIFICATION_ID, myNotification);
+    }
+
+    public void checkLocation(BottomNavigationView navView){
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+        DatabaseReference barRef = mDatabase.child("bars/");
+
+        barRef.addValueEventListener(new ValueEventListener(){
+            @Override
+            public void onDataChange(DataSnapshot dataSnapshot){
+                List<String> list = new ArrayList<>();
+                for(DataSnapshot data: dataSnapshot.getChildren()){
+                    String barName = data.getKey();
+                    Double latitude = Double.parseDouble(data.child("latitude").getValue().toString());
+                    Double longitude = Double.parseDouble(data.child("longitude").getValue().toString());;
+                    sendNotification(navView, barName);
+                }
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+            }
+
+        });
+    }
+
+    //Code Taken From Stack Overflow: https://stackoverflow.com/questions/3694380/calculating-distance-between-two-points-using-latitude-longitude
+    public static double distance(double lat1, double lat2, double lon1,
+                                  double lon2, double el1, double el2) {
+
+        final int R = 6371; // Radius of the earth
+
+        double latDistance = Math.toRadians(lat2 - lat1);
+        double lonDistance = Math.toRadians(lon2 - lon1);
+        double a = Math.sin(latDistance / 2) * Math.sin(latDistance / 2)
+                + Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2))
+                * Math.sin(lonDistance / 2) * Math.sin(lonDistance / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        double distance = R * c * 1000; // convert to meters
+
+        double height = el1 - el2;
+
+        distance = Math.pow(distance, 2) + Math.pow(height, 2);
+
+        return Math.sqrt(distance);
     }
 
     @Override
