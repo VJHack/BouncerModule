@@ -1,5 +1,8 @@
 package com.example.bouncermodule;
 
+import static android.content.Context.NOTIFICATION_SERVICE;
+
+import android.app.NotificationManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -20,14 +23,16 @@ import java.util.Map;
 
 public class NotificationReceiver3 extends BroadcastReceiver {
     private DatabaseReference mDatabase;
+    private NotificationManager mNotifyManager;
 
     @Override
     public void onReceive(Context context, Intent intent) {
-
+        mNotifyManager = (NotificationManager) context.getSystemService(NOTIFICATION_SERVICE);
+        mNotifyManager.cancel(intent.getIntExtra("notifId", -1));
         mDatabase = FirebaseDatabase.getInstance().getReference();
         DatabaseReference barRef = mDatabase.child("bars/");
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(Calendar.getInstance().getTime());
-        barRef.child("Chasers 2_0").child("userInput").get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+        barRef.child(intent.getStringExtra("barName")).child("userInput").get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DataSnapshot> task) {
                 if (!task.isSuccessful()) {
@@ -42,13 +47,14 @@ public class NotificationReceiver3 extends BroadcastReceiver {
 //                    Date past = format.parse("01/10/2010");
 //                    Date now = new Date();
 //                    TimeUnit.MILLISECONDS.toMinutes
-                    barRef.child("Chasers 2_0").child("userInput").child(timeStamp).setValue("Long");
+
+                    barRef.child(intent.getStringExtra("barName")).child("userInput").child(timeStamp).setValue("Long");
 
                 }
             }
         });
 //        barRef.child("Chasers 2_0").child("userInput").setValue("Long");
-        System.out.println("Long Action performed" + intent.getIntExtra("barName",0));
+        System.out.println("Long Action performed" + intent.getStringExtra("barName"));
     }
 
 

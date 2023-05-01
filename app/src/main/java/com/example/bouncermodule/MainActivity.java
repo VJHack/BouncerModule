@@ -98,8 +98,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     //Current Location
     //TODO: Replace these values with realtime values
-    private double lat = 43.0686899;
-    private double lon = -89.3876907;
+    private double lat = -89.3876907;
+    private double lon = 43.0686899;
 
     private DatabaseReference mDatabase;
 
@@ -374,26 +374,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mDatabase = FirebaseDatabase.getInstance().getReference();
         DatabaseReference barRef = mDatabase.child("bars/");
 
-        barRef.addValueEventListener(new ValueEventListener(){
-            @Override
-            public void onDataChange(DataSnapshot dataSnapshot){
+        barRef.get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
+
+        public void onComplete(@NonNull Task<DataSnapshot> task) {
                 List<String> list = new ArrayList<>();
-                for(DataSnapshot data: dataSnapshot.getChildren()){
+                for(DataSnapshot data: task.getResult().getChildren()){
                     String barName = data.getKey();
                     Double latitude = Double.parseDouble(data.child("latitude").getValue().toString());
                     Double longitude = Double.parseDouble(data.child("longitude").getValue().toString());;
-                    sendNotification(navView, barName);
+                    System.out.println("Distance"+ distance(latitude, lat,longitude,lon, 0.0,0.0));
+                    if(distance(latitude, lat,longitude,lon,0.0,0.0) < (double)700 ) {
+                        sendNotification(navView, barName);
+                    }
                 }
             }
 
-            @Override
-            public void onCancelled(@NonNull DatabaseError error) {
-            }
+
 
         });
     }
 
     //Code Taken From Stack Overflow: https://stackoverflow.com/questions/3694380/calculating-distance-between-two-points-using-latitude-longitude
+    public final static double AVERAGE_RADIUS_OF_EARTH = 6371;
+    /**
+     * Calculate distance between two points in latitude and longitude taking
+     * into account height difference. If you are not interested in height
+     * difference pass 0.0. Uses Haversine method as its base.
+     *
+     * lat1, lon1 Start point lat2, lon2 End point el1 Start altitude in meters
+     * el2 End altitude in meters
+     * @returns Distance in Meters
+     */
     public static double distance(double lat1, double lat2, double lon1,
                                   double lon2, double el1, double el2) {
 
@@ -409,7 +420,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         double height = el1 - el2;
 
-        distance = Math.pow(distance, 2) + Math.pow(height, 2);
+        distance = Math.pow(distance, 2) ;
 
         return Math.sqrt(distance);
     }
