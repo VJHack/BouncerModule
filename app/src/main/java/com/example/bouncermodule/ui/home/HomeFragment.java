@@ -134,7 +134,7 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
         });
 
         Verified = true;
-
+        mDatabase = FirebaseDatabase.getInstance().getReference();
         DatabaseReference barRef = mDatabase.child("bars/");
         barRef.addValueEventListener(new ValueEventListener(){
             @Override
