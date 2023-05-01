@@ -316,17 +316,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         //Intent for slow button
         Intent broadcastIntent1 = new Intent(this, NotificationReceiver1.class);
         broadcastIntent1.putExtra("toastMessage1", "message");
-        PendingIntent actionIntent1 = PendingIntent.getBroadcast(this, 0, broadcastIntent1, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent actionIntent1 = PendingIntent.getBroadcast(this, 0, broadcastIntent1, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         //Intent for medium button
         Intent broadcastIntent2 = new Intent(this, NotificationReceiver2.class);
         broadcastIntent2.putExtra("toastMessage1", "message");
-        PendingIntent actionIntent2 = PendingIntent.getBroadcast(this, 0, broadcastIntent2, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent actionIntent2 = PendingIntent.getBroadcast(this, 0, broadcastIntent2, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         //Intent for long button
         Intent broadcastIntent3 = new Intent(this, NotificationReceiver3.class);
         broadcastIntent3.putExtra("toastMessage1", "message");
-        PendingIntent actionIntent3 = PendingIntent.getBroadcast(this, 0, broadcastIntent3, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent actionIntent3 = PendingIntent.getBroadcast(this, 0, broadcastIntent3, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
         //Setting the Color of each Notification button
         Spannable spannableShort = new SpannableString("Short");
