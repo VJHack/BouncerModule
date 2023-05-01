@@ -46,5 +46,11 @@
             android:id="@+id/confidenceText"
             android:textSize="24dp">
         </TextView>
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/birthdayText"
+            android:textSize="24dp">
+        </TextView>
     </LinearLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

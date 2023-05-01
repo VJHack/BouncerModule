@@ -330,6 +330,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         //Intent for slow button
         Intent broadcastIntent1 = new Intent(this, NotificationReceiver1.class);
+
         broadcastIntent1.putExtra("barName", barName);
         broadcastIntent1.putExtra("notifId", NOTIFICATION_ID);
         PendingIntent actionIntent1 = PendingIntent.getBroadcast(this, randInt.ints(1, 101).findAny().getAsInt(), broadcastIntent1, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
