@@ -72,9 +72,6 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
     private ImageView photoIdImageView;
     private Button photoIdButton;
     private FragmentHomeBinding binding;
-    // Firebase variables
-    private DatabaseReference mDatabase;
-    private Map<String, Bars> barsMap = new HashMap<>();
 
     private String associatedBar;
     private Boolean Verified;
@@ -204,17 +201,17 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
         if(view.getId() == R.id.Short) {
             Log.d("LOG", "NONE CLICKED");
             currentLength.setText("SHORT");
-            lineLengthColor();
+            currentLength.setTextColor(Color.parseColor("#0000FF"));
         }else if(view.getId() == R.id.Medium){
             Log.d("LOG", "MEDIUM CLICKED");
             currentLength.setText("MEDIUM");
-            lineLengthColor();
+            currentLength.setTextColor(Color.parseColor("#FFA500"));
         }else if(view.getId() == R.id.Long){
             currentLength.setText("LONG");
-            lineLengthColor();
+            currentLength.setTextColor(Color.parseColor("#FF0000")); // Color Red
         }else if(view.getId() == R.id.None){
             currentLength.setText("NONE");
-            lineLengthColor();
+            currentLength.setTextColor(Color.parseColor("#028A0F"));
         }else if(view.getId() == R.id.plus){
             counterValInt++;
             counterValue.setText("Total:    " +String.valueOf(counterValInt));
@@ -223,6 +220,16 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
                 counterValInt--;
             }
             counterValue.setText("Total:    " + String.valueOf(counterValInt));
+        }else if(view.getId() == R.id.signOut){
+            AuthenticationFragment.signOut();
+            Intent intent = new Intent(getActivity(), AuthenticationFragment.class);
+            startActivity(intent);
+        }else if(view.getId() == R.id.Reset) {
+            counterValInt = 0;
+            counterValue.setText("Total:    " + String.valueOf(counterValInt));
+            currentLength.setText("NONE");
+            currentLength.setTextColor(Color.parseColor("#028A0F"));
+
         }
 
         if (Verified) {
