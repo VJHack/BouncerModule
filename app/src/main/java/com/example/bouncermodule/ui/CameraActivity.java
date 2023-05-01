@@ -43,6 +43,11 @@ import com.google.mlkit.vision.face.Face;
 import com.google.mlkit.vision.face.FaceDetection;
 import com.google.mlkit.vision.face.FaceDetector;
 import com.google.mlkit.vision.face.FaceDetectorOptions;
+import com.google.mlkit.vision.text.Text;
+import com.google.mlkit.vision.text.TextRecognition;
+import com.google.mlkit.vision.text.TextRecognizer;
+import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
+
 import java.io.ByteArrayOutputStream;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -101,6 +106,7 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
                 takePhotoButton.setVisibility(View.INVISIBLE);
                 previewView.setVisibility(View.INVISIBLE);
                 checkFaces();
+                detectText();
             }
         });
     }
@@ -235,5 +241,45 @@ public class CameraActivity extends AppCompatActivity implements ImageAnalysis.A
         catch (PackageManager.NameNotFoundException e){
             Log.e("FAILED GETTING METADATA AWS KEYS FROM LOCAL PROPERTIES", e.getMessage());
         }
+        catch (com.amazonaws.AmazonServiceException e){
+            Log.e("AMAZON REKOGNITION KEY BROKEN", e.getMessage());
+        }
+    }
+
+    public void detectText(){
+        TextRecognizer recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
+        Task<Text> result =
+                recognizer.process(inputImage2)
+                        .addOnSuccessListener(new OnSuccessListener<Text>() {
+                            @Override
+                            public void onSuccess(Text visionText) {
+                                // Task completed successfully
+                                String txt = visionText.getText();
+                                int index;
+                                if(txt.toUpperCase().contains("D0B"))
+                                    index = txt.toUpperCase().indexOf("D0B");
+                                else
+                                    index = txt.toUpperCase().indexOf("DOB");
+                                TextView tv = findViewById(R.id.birthdayText);
+                                if(index!=-1 && txt.toLowerCase().contains("4a")){
+                                    String bday = txt.substring(index+3, txt.toLowerCase().indexOf("4a"));
+                                    tv.setText("Birthday: " + bday.replace('I', '/'));
+                                    Log.i("TEXT DETECTION", txt);
+                                }
+                                else{
+                                    tv.setText("Birthday: Unable to obtain");
+                                }
+                                //Log.i("TEXT DETECTION", visionText.getText());
+                                // ...
+                            }
+                        })
+                        .addOnFailureListener(
+                                new OnFailureListener() {
+                                    @Override
+                                    public void onFailure(@NonNull Exception e) {
+                                        // Task failed with an exception
+                                        // ...
+                                    }
+                                });
     }
 }
