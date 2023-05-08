@@ -1,9 +1,13 @@
-//package com.example.bouncermodule;
-//
+//import android.Manifest;
+//import android.content.Context;
+//import android.content.pm.PackageManager;
 //import android.location.Location;
 //import android.os.Looper;
 //import android.util.Log;
 //
+//import androidx.core.app.ActivityCompat;
+//
+//import com.example.bouncermodule.GPSPoint;
 //import com.google.android.gms.location.FusedLocationProviderClient;
 //import com.google.android.gms.location.LocationCallback;
 //import com.google.android.gms.location.LocationRequest;
@@ -18,7 +22,7 @@
 // * www.calculistik.com Mobile Development
 // */
 //
-//public class Wherebouts {
+//public class Wherebouts extends Context {
 //
 //    private static final Wherebouts instance = new Wherebouts();
 //
@@ -58,8 +62,17 @@
 //        };
 //
 //        this.mFusedLocationClient = LocationServices.getFusedLocationProviderClient(MainApplication.getAppContext());
-//        this.mFusedLocationClient.requestLocationUpdates(this.locationRequest,
-//                this.locationCallback, Looper.myLooper());
+//        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            // TODO: Consider calling
+//            //    ActivityCompat#requestPermissions
+//            // here to request the missing permissions, and then overriding
+//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//            //                                          int[] grantResults)
+//            // to handle the case where the user grants the permission. See the documentation
+//            // for ActivityCompat#requestPermissions for more details.
+//            return TODO;
+//        }
+//        this.mFusedLocationClient.requestLocationUpdates(this.locationRequest, this.locationCallback, Looper.myLooper());
 //    }
 //
 //    public static Wherebouts instance() {

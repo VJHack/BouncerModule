@@ -6,14 +6,18 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.Typeface;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -34,6 +38,7 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
@@ -95,18 +100,50 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback {
 
                 for(DataSnapshot data: dataSnapshot.getChildren()){
                     String barName = data.getKey();
+                    String length = data.child("lineLength").getValue().toString();
+                    int capacity = Integer.parseInt(data.child("lineCount").getValue().toString());
+
+                    System.out.println(length);
                     Double latitude = Double.parseDouble(data.child("latitude").getValue().toString());
                     Double longitude = Double.parseDouble(data.child("longitude").getValue().toString());;
-                    Object[] tempBar = {longitude, latitude, barName};
+                    Object[] tempBar = {longitude, latitude, barName, length, capacity};
                     bars.add(tempBar);
                 }
 
                 for(int i = 0; i < bars.size(); i++){
+
                     LatLng toAddBarMarker = new LatLng( Double.valueOf(bars.get(i)[0].toString()), Double.valueOf(bars.get(i)[1].toString()));
-                    mMap.addMarker(new MarkerOptions()
-                            .position(toAddBarMarker)
-                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE))
-                            .title(bars.get(i)[2].toString()));
+                    if(bars.get(i)[3].toString().equalsIgnoreCase("none")){
+                        mMap.addMarker(new MarkerOptions()
+                                .position(toAddBarMarker)
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN))
+                                .title(bars.get(i)[2].toString())
+                                .snippet("Line: " + bars.get(i)[3] ));
+
+                    }
+                    else if(bars.get(i)[3].toString().equalsIgnoreCase("short")){
+                        mMap.addMarker(new MarkerOptions()
+                                .position(toAddBarMarker)
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW))
+                                .title(bars.get(i)[2].toString())
+                                .snippet("Line : " + bars.get(i)[3]));
+
+                    }
+                    else if(bars.get(i)[3].toString().equalsIgnoreCase("medium")){
+                        mMap.addMarker(new MarkerOptions()
+                                .position(toAddBarMarker)
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE))
+                                .title(bars.get(i)[2].toString())
+                                .snippet("Line: " + bars.get(i)[3] ));
+
+                    }
+                    else {
+                        mMap.addMarker(new MarkerOptions()
+                                .position(toAddBarMarker)
+                                .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                                .title(bars.get(i)[2].toString())
+                                .snippet("Line: " + bars.get(i)[3]));
+                    }
                 }
 
 
@@ -119,6 +156,8 @@ public class DashboardFragment extends Fragment implements OnMapReadyCallback {
             }
 
         });
+
+
 
 //        final TextView textView = binding.textDashboard;
 //        dashboardViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);

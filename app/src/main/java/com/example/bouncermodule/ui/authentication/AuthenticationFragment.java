@@ -43,7 +43,7 @@ public class AuthenticationFragment extends AppCompatActivity {
     private EditText password;
     private Button createAccount;
     private TextView status;
-    private String userEmail;
+    private static String userEmail;
     //private FirebaseUser user;
 
 //    public View onCreate(@NonNull LayoutInflater inflater,
@@ -204,7 +204,7 @@ public class AuthenticationFragment extends AppCompatActivity {
         });
     }
 
-    public String getEmail() {
+    public static String getEmail() {
         return userEmail;
     }
 

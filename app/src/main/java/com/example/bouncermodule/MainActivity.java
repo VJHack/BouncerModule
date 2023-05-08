@@ -1,20 +1,25 @@
 package com.example.bouncermodule;
-
 import android.annotation.SuppressLint;
 import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Looper;
+import android.preference.PreferenceManager;
 import android.provider.MediaStore;
 import android.provider.Settings;
 import android.text.Spannable;
@@ -55,9 +60,11 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Random;
 
@@ -103,15 +110,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private DatabaseReference mDatabase;
 
+    private static final int REQUEST_PERMISSIONS = 100;
+    boolean boolean_permission;
+    SharedPreferences mPref;
+    SharedPreferences.Editor medit;
+    Double latitude,longitude;
+    Geocoder geocoder;
+
+    HashMap<String, String> barNotifsSent = new HashMap<>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
-        setContentView(binding.getRoot());
+        geocoder = new Geocoder(this, Locale.getDefault());
+        mPref = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
+        medit = mPref.edit();
+        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+        mDatabase = FirebaseDatabase.getInstance().getReference();
+        Intent intent = new Intent(getApplicationContext(), GoogleService.class);
+        startService(intent);
         BottomNavigationView navView = findViewById(R.id.nav_view);
+//        checkLocation(navView);
 
-        checkLocation(navView);
+        setContentView(binding.getRoot());
+
         DatabaseReference barRef = mDatabase.child("bars/");
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
@@ -135,169 +158,256 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
         };
-        updateValuesFromBundle(savedInstanceState);
-
-        startLocationUpdates();
+//        updateValuesFromBundle(savedInstanceState);
+//
+//        startLocationUpdates();
 
 
     }
 
-    private void updateValuesFromBundle(Bundle savedInstanceState) {
-        System.out.println("aaaaaaaa");
-        if (savedInstanceState == null) {
-            return;
-        }
+    private void fn_permission() {
+        if ((ContextCompat.checkSelfPermission(getApplicationContext(), android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED)) {
 
-        // Update the value of requestingLocationUpdates from the Bundle.
-        if (savedInstanceState.keySet().contains(REQUESTING_LOCATION_UPDATES_KEY)) {
-            requestingLocationUpdates = savedInstanceState.getBoolean(
-                    REQUESTING_LOCATION_UPDATES_KEY);
-        }
-
-        // ...
-
-        // Update UI to match restored state
-
-    }
+            if ((ActivityCompat.shouldShowRequestPermissionRationale(MainActivity.this, android.Manifest.permission.ACCESS_FINE_LOCATION))) {
 
 
-    @SuppressLint("MissingPermission")
-    private void getLastLocation() {
-        // check if permissions are given
-        if (checkPermissions()) {
-
-            // check if location is enabled
-            if (isLocationEnabled()) {
-
-                // getting last
-                // location from
-                // FusedLocationClient
-                // object
-                mFusedLocationClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
-                    @Override
-                    public void onComplete(@NonNull Task<Location> task) {
-                        Location location = task.getResult();
-                        if (location == null) {
-                            requestNewLocationData();
-                        } else {
-                            System.out.println(location.getLatitude());
-                            System.out.println(location.getLongitude());
-                            location=null;
-//                            latitudeTextView.setText(location.getLatitude() + "");
-//                            longitTextView.setText(location.getLongitude() + "");
-                        }
-                    }
-                });
             } else {
-                Toast.makeText(this, "Please turn on" + " your location...", Toast.LENGTH_LONG).show();
-                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-                startActivity(intent);
+                ActivityCompat.requestPermissions(MainActivity.this, new String[]{android.Manifest.permission.ACCESS_FINE_LOCATION
+
+                        },
+                        REQUEST_PERMISSIONS);
+
             }
         } else {
-            // if permissions aren't available,
-            // request for permissions
-            requestPermissions();
+            boolean_permission = true;
         }
     }
 
-    @SuppressLint("MissingPermission")
-    private void requestNewLocationData() {
-
-        // Initializing LocationRequest
-        // object with appropriate methods
-        LocationRequest mLocationRequest = new LocationRequest();
-        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
-        mLocationRequest.setInterval(5);
-        mLocationRequest.setFastestInterval(0);
-        mLocationRequest.setNumUpdates(1);
-
-        // setting LocationRequest
-
-        // on FusedLocationClient
-        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
-        mFusedLocationClient.requestLocationUpdates(mLocationRequest, locationCallback, Looper.myLooper());
-    }
-
-
-
-    // method to check for permissions
-    private boolean checkPermissions() {
-        return ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
-
-        // If we want background location
-        // on Android 10.0 and higher,
-        // use:
-        // ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
-    }
-
-    protected void onPause() {
-        super.onPause();
-        stopLocationUpdates();
-    }
-
-    private void stopLocationUpdates() {
-        mFusedLocationClient.removeLocationUpdates(locationCallback);
-    }
-
-    // method to request for permissions
-    private void requestPermissions() {
-        ActivityCompat.requestPermissions(this, new String[]{
-                android.Manifest.permission.ACCESS_COARSE_LOCATION,
-                android.Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_ID);
-    }
-
-    // method to check
-    // if location is enabled
-    private boolean isLocationEnabled() {
-        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
-    }
-
-    // If everything is alright then
     @Override
-    public void
-    onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
-        if (requestCode == PERMISSION_ID) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                getLastLocation();
+        switch (requestCode) {
+            case REQUEST_PERMISSIONS: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    boolean_permission = true;
+
+                } else {
+                    Toast.makeText(getApplicationContext(), "Please allow the permission", Toast.LENGTH_LONG).show();
+
+                }
             }
         }
     }
 
+    private BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+
+            latitude = Double.valueOf(intent.getStringExtra("latutide"));
+            longitude = Double.valueOf(intent.getStringExtra("longitude"));
+
+
+            List<Address> addresses = null;
+
+            try {
+                addresses = geocoder.getFromLocation(latitude, longitude, 1);
+                String cityName = addresses.get(0).getAddressLine(0);
+                String stateName = addresses.get(0).getAddressLine(1);
+                String countryName = addresses.get(0).getAddressLine(2);
+                System.out.println("Latitude Bckgnd: "+ latitude);
+                System.out.println("Longitude Bckng: "+ longitude);
+//                tv_area.setText(addresses.get(0).getAdminArea());
+//                tv_locality.setText(stateName);
+//                tv_address.setText(countryName);
+
+                lat = longitude;
+                lon = latitude;
+
+                BottomNavigationView navView = findViewById(R.id.nav_view);
+                checkLocation(navView);
+
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+
+
+//            tv_latitude.setText(latitude+"");
+//            tv_longitude.setText(longitude+"");
+//            tv_address.getText();
+
+
+        }
+    };
+
+    @Override
     protected void onResume() {
         super.onResume();
-        if (requestingLocationUpdates) {
-            startLocationUpdates();
-        }
-    }
+        registerReceiver(broadcastReceiver, new IntentFilter(GoogleService.str_receiver));
 
-    private void startLocationUpdates() {
-        System.out.println("fewrfwefwef");
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        mFusedLocationClient.requestLocationUpdates(locationRequest,
-                locationCallback,
-                Looper.getMainLooper());
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        boolean requestingLocationUpdates = true;
-        outState.putBoolean(String.valueOf(true),
-                requestingLocationUpdates);
-        // ...
-        super.onSaveInstanceState(outState);
+    protected void onPause() {
+        super.onPause();
+//        unregisterReceiver(broadcastReceiver);
     }
+//    private void updateValuesFromBundle(Bundle savedInstanceState) {
+//        System.out.println("aaaaaaaa");
+//        if (savedInstanceState == null) {
+//            return;
+//        }
+//
+//        // Update the value of requestingLocationUpdates from the Bundle.
+//        if (savedInstanceState.keySet().contains(REQUESTING_LOCATION_UPDATES_KEY)) {
+//            requestingLocationUpdates = savedInstanceState.getBoolean(
+//                    REQUESTING_LOCATION_UPDATES_KEY);
+//        }
+//
+//        // ...
+//
+//        // Update UI to match restored state
+//
+//    }
+
+
+//    @SuppressLint("MissingPermission")
+//    private void getLastLocation() {
+//        // check if permissions are given
+//        if (checkPermissions()) {
+//
+//            // check if location is enabled
+//            if (isLocationEnabled()) {
+//
+//                // getting last
+//                // location from
+//                // FusedLocationClient
+//                // object
+//                mFusedLocationClient.getLastLocation().addOnCompleteListener(new OnCompleteListener<Location>() {
+//                    @Override
+//                    public void onComplete(@NonNull Task<Location> task) {
+//                        Location location = task.getResult();
+//                        if (location == null) {
+//                            requestNewLocationData();
+//                        } else {
+//                            System.out.println(location.getLatitude());
+//                            System.out.println(location.getLongitude());
+//                            location=null;
+////                            latitudeTextView.setText(location.getLatitude() + "");
+////                            longitTextView.setText(location.getLongitude() + "");
+//                        }
+//                    }
+//                });
+//            } else {
+//                Toast.makeText(this, "Please turn on" + " your location...", Toast.LENGTH_LONG).show();
+//                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+//                startActivity(intent);
+//            }
+//        } else {
+//            // if permissions aren't available,
+//            // request for permissions
+//            requestPermissions();
+//        }
+//    }
+//
+//    @SuppressLint("MissingPermission")
+//    private void requestNewLocationData() {
+//
+//        // Initializing LocationRequest
+//        // object with appropriate methods
+//        LocationRequest mLocationRequest = new LocationRequest();
+//        mLocationRequest.setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY);
+//        mLocationRequest.setInterval(5);
+//        mLocationRequest.setFastestInterval(0);
+//        mLocationRequest.setNumUpdates(1);
+//
+//        // setting LocationRequest
+//
+//        // on FusedLocationClient
+//        mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this);
+//        mFusedLocationClient.requestLocationUpdates(mLocationRequest, locationCallback, Looper.myLooper());
+//    }
+//
+//
+//
+//    // method to check for permissions
+//    private boolean checkPermissions() {
+//        return ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
+//
+//        // If we want background location
+//        // on Android 10.0 and higher,
+//        // use:
+//        // ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_BACKGROUND_LOCATION) == PackageManager.PERMISSION_GRANTED
+//    }
+//
+//    protected void onPause() {
+//        super.onPause();
+//        stopLocationUpdates();
+//    }
+//
+//    private void stopLocationUpdates() {
+//        mFusedLocationClient.removeLocationUpdates(locationCallback);
+//    }
+//
+//    // method to request for permissions
+//    private void requestPermissions() {
+//        ActivityCompat.requestPermissions(this, new String[]{
+//                android.Manifest.permission.ACCESS_COARSE_LOCATION,
+//                android.Manifest.permission.ACCESS_FINE_LOCATION}, PERMISSION_ID);
+//    }
+//
+//    // method to check
+//    // if location is enabled
+//    private boolean isLocationEnabled() {
+//        LocationManager locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+//        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER) || locationManager.isProviderEnabled(LocationManager.NETWORK_PROVIDER);
+//    }
+//
+//    // If everything is alright then
+//    @Override
+//    public void
+//    onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+//        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+//
+//        if (requestCode == PERMISSION_ID) {
+//            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+//                getLastLocation();
+//            }
+//        }
+//    }
+//
+//    protected void onResume() {
+//        super.onResume();
+//        if (requestingLocationUpdates) {
+//            startLocationUpdates();
+//        }
+//    }
+//
+//    private void startLocationUpdates() {
+//        System.out.println("fewrfwefwef");
+//        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+//            // TODO: Consider calling
+//            //    ActivityCompat#requestPermissions
+//            // here to request the missing permissions, and then overriding
+//            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+//            //                                          int[] grantResults)
+//            // to handle the case where the user grants the permission. See the documentation
+//            // for ActivityCompat#requestPermissions for more details.
+//            return;
+//        }
+//        mFusedLocationClient.requestLocationUpdates(locationRequest,
+//                locationCallback,
+//                Looper.getMainLooper());
+//    }
+//
+//    @Override
+//    protected void onSaveInstanceState(Bundle outState) {
+//        boolean requestingLocationUpdates = true;
+//        outState.putBoolean(String.valueOf(true),
+//                requestingLocationUpdates);
+//        // ...
+//        super.onSaveInstanceState(outState);
+//    }
 
     // used for reading in file filled with new bars
 //    public void writeNewBar(String barId, String lineLength, Integer lineCount, Double longitude, Double latitude) {
@@ -367,7 +477,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 
         Notification myNotification = notifyBuilder.build();
-        mNotifyManager.notify(NOTIFICATION_ID, myNotification);
+        System.out.println("barName:"  + barName);
+        if(!barNotifsSent.containsKey(barName)) {
+            mNotifyManager.notify(NOTIFICATION_ID, myNotification);
+            barNotifsSent.put(barName,barName);
+        }
     }
 
     public void checkLocation(BottomNavigationView navView){
@@ -384,7 +498,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     Double latitude = Double.parseDouble(data.child("latitude").getValue().toString());
                     Double longitude = Double.parseDouble(data.child("longitude").getValue().toString());;
                     System.out.println("Distance"+ distance(latitude, lat,longitude,lon, 0.0,0.0));
-                    if(distance(latitude, lat,longitude,lon,0.0,0.0) < (double)700 ) {
+                    if(distance(latitude, lat,longitude,lon,0.0,0.0) < (double)200 ) {
                         sendNotification(navView, barName);
                     }
                 }

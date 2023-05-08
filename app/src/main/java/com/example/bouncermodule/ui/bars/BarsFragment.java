@@ -68,6 +68,7 @@ public class BarsFragment extends Fragment  {
                     Integer lineCount = Integer.parseInt(data.child("lineCount").getValue().toString());
                     Double latitude = Double.parseDouble(data.child("latitude").getValue().toString());
                     Double longitude = Double.parseDouble(data.child("longitude").getValue().toString());;
+
                     Bars tempBar = new Bars(lineLength, lineCount, longitude, latitude);
                     barsMap.put(barName, tempBar);
                     list.add(barName);
@@ -129,7 +130,8 @@ public class BarsFragment extends Fragment  {
             String lineLength = barsMap.get(barName).getLineLength();
             // Capitalize first letter then make rest of string lower case
             lineLength = lineLength.substring(0, 1).toUpperCase() + lineLength.substring(1).toLowerCase();
-            textView.setText("Bar Name:         " + barName + "\nLine Length:      " + lineLength);
+            int lineCount = barsMap.get(barName).getLineCount();
+            textView.setText("Bar Name:         " + barName + "\nLine Length:      " + lineLength + "\nCurrent Capacity: " + lineCount);
 
             return textView;
         }

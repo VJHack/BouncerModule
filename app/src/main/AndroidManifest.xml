@@ -48,6 +48,7 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service android:name=".GoogleService"></service>
 
         <activity
             android:name=".MainActivity"
@@ -57,6 +58,7 @@
         <receiver android:name=".NotificationReceiver1"></receiver>
         <receiver android:name=".NotificationReceiver2"></receiver>
         <receiver android:name=".NotificationReceiver3"></receiver>
+
     </application>
 
 </manifest>

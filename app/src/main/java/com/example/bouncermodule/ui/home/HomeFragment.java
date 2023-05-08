@@ -2,19 +2,26 @@ package com.example.bouncermodule.ui.home;
 
 import static android.content.Context.CAMERA_SERVICE;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraManager;
+import android.media.Image;
+import android.os.Bundle;
+import android.util.Log;
+import android.util.SparseIntArray;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Surface;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -23,9 +30,13 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 
+
+import com.example.bouncermodule.R;
+import com.example.bouncermodule.databinding.FragmentHomeBinding;
+import com.example.bouncermodule.ui.CameraActivity;
+import com.google.mlkit.vision.common.InputImage;
+import com.google.mlkit.vision.face.FaceDetectorOptions;
 import com.example.bouncermodule.Bars;
-import com.example.bouncermodule.MainActivity;
-//import com.example.bouncermodule.Manifest;
 import com.example.bouncermodule.R;
 import com.example.bouncermodule.databinding.ActivityMainBinding;
 import com.example.bouncermodule.databinding.FragmentHomeBinding;
@@ -62,6 +73,18 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
     private Button photoIdButton;
     private FragmentHomeBinding binding;
 
+    private String associatedBar;
+    private Boolean Verified;
+
+    // For input images of face detection
+    private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
+    static {
+        ORIENTATIONS.append(Surface.ROTATION_0, 0);
+        ORIENTATIONS.append(Surface.ROTATION_90, 90);
+        ORIENTATIONS.append(Surface.ROTATION_180, 180);
+        ORIENTATIONS.append(Surface.ROTATION_270, 270);
+    }
+
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
         HomeViewModel homeViewModel =
@@ -69,7 +92,6 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
 
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
-
 
         View myView = inflater.inflate(R.layout.fragment_home, container, false);
         noneButton = (Button) myView.findViewById(R.id.None);
@@ -98,10 +120,10 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
         // For face detection stuff
         // setup detector options
         FaceDetectorOptions faceOptions = new FaceDetectorOptions.Builder()
-                        .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
-                        .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
-                        .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
-                        .build();
+                .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_ACCURATE)
+                .setLandmarkMode(FaceDetectorOptions.LANDMARK_MODE_ALL)
+                .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
+                .build();
         // prepare input image (from camera)
         Button cameraButton = (Button) myView.findViewById(R.id.cameraButton);
         cameraButton.setOnClickListener(new View.OnClickListener()
@@ -118,6 +140,8 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
                 }
             }
         });
+
+        Verified = true;
         mDatabase = FirebaseDatabase.getInstance().getReference();
 
         DatabaseReference barRef = mDatabase.child("bars/");
@@ -133,13 +157,35 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
                     Bars tempBar = new Bars(lineLength, lineCount, longitude, latitude);
                     barsMap.put(barName, tempBar);
                 }
+            }
 
-                // Make "Mondays" a variable for which bouncer is using counter
-                Bars tempBar = barsMap.get("Mondays");
-                counterValInt = tempBar.getLineCount();
-                counterValue.setText("Total:    " +String.valueOf(counterValInt));
-                currentLength.setText(tempBar.getLineLength());
-                lineLengthColor();
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+
+            }
+        });
+
+        DatabaseReference userRef = mDatabase.child("VerifiedUsers/");
+
+        userRef.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                try {
+                    String userEmail = parseEmail(AuthenticationFragment.getEmail());
+                    associatedBar = snapshot.child(userEmail).getValue().toString();
+                    Bars tempBar = barsMap.get(associatedBar);
+                    counterValInt = tempBar.getLineCount();
+                    counterValue.setText("Total:    " +String.valueOf(counterValInt));
+                    currentLength.setText(tempBar.getLineLength());
+                    lineLengthColor();
+                }catch(Exception e) {
+                    // If in here the user is a regular user and not a bouncer
+                    Verified = false;
+                    counterValInt = 0;
+                    counterValue.setText("Total:    " +String.valueOf(counterValInt));
+                    currentLength.setText("NONE");
+                    lineLengthColor();
+                }
             }
 
             @Override
@@ -186,11 +232,12 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
 
         }
 
-        // Changing the line count and line length of Mondays
-        Bars tempBar = barsMap.get("Mondays");
-        tempBar.setLineCount(counterValInt);
-        tempBar.setLineLength((String) currentLength.getText());
-        mDatabase.child("bars").child("Mondays").setValue(tempBar);
+        if (Verified) {
+            Bars tempBar = barsMap.get(associatedBar);
+            tempBar.setLineCount(counterValInt);
+            tempBar.setLineLength((String) currentLength.getText());
+            mDatabase.child("bars").child(associatedBar).setValue(tempBar);
+        }
     }
 
     public void lineLengthColor() {
@@ -213,6 +260,37 @@ public class HomeFragment extends Fragment  implements View.OnClickListener {
     public void onDestroyView() {
         super.onDestroyView();
         binding = null;
+    }
+
+    private String parseEmail(String username) {
+        return username.replaceAll("[.]", "_");
+    }
+
+    /**
+     * Get the angle by which an image must be rotated given the device's current
+     * orientation. Used for facial detection.
+     */
+    // @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
+    private int getRotationCompensation(String cameraId, Activity activity, boolean isFrontFacing)
+            throws CameraAccessException {
+        // Get the device's current rotation relative to its "native" orientation.
+        // Then, from the ORIENTATIONS table, look up the angle the image must be
+        // rotated to compensate for the device's rotation.
+        int deviceRotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+        int rotationCompensation = ORIENTATIONS.get(deviceRotation);
+
+        // Get the device's sensor orientation.
+        CameraManager cameraManager = (CameraManager) activity.getSystemService(CAMERA_SERVICE);
+        int sensorOrientation = cameraManager
+                .getCameraCharacteristics(cameraId)
+                .get(CameraCharacteristics.SENSOR_ORIENTATION);
+
+        if (isFrontFacing) {
+            rotationCompensation = (sensorOrientation + rotationCompensation) % 360;
+        } else { // back-facing
+            rotationCompensation = (sensorOrientation - rotationCompensation + 360) % 360;
+        }
+        return rotationCompensation;
     }
 
 }

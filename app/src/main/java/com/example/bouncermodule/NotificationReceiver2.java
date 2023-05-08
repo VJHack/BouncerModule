@@ -17,7 +17,9 @@ import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 public class NotificationReceiver2 extends BroadcastReceiver {
     private DatabaseReference mDatabase;
@@ -33,20 +35,17 @@ public class NotificationReceiver2 extends BroadcastReceiver {
         barRef.child(intent.getStringExtra("barName")).child("userInput").get().addOnCompleteListener(new OnCompleteListener<DataSnapshot>() {
             @Override
             public void onComplete(@NonNull Task<DataSnapshot> task) {
-                if (!task.isSuccessful()) {
-                    Log.e("firebase", "Error getting data", task.getException());
-                }
-                else {
-                    System.out.println(timeStamp);
-                    Log.d("firebase", String.valueOf(task.getResult().getValue()));
-//                    Map<String, String> timeMap = new HashMap<>();
-//                    timeMap.put(timeStamp, "Long");
-//                    SimpleDateFormat format = new SimpleDateFormat("dd/MM/yyyy");
-//                    Date past = format.parse("01/10/2010");
-//                    Date now = new Date();
-//                    TimeUnit.MILLISECONDS.toMinutes
+                List<String> list = new ArrayList<>();
+                for(DataSnapshot data: task.getResult().getChildren()){
+                    String barName = data.getKey();
                     barRef.child(intent.getStringExtra("barName")).child("userInput").child(timeStamp).setValue("Medium");
-
+                    if(data.child("userInput").getChildrenCount() > 4) {
+                        for (DataSnapshot inputs : data.child("userInput").getChildren()) {
+                            System.out.println(barRef.child(intent.getStringExtra("barName")).child("userInput").child(inputs.getKey()));
+                            barRef.child(intent.getStringExtra("barName")).child("userInput").child(inputs.getKey()).removeValue();
+                            break;
+                        }
+                    }
                 }
             }
         });
